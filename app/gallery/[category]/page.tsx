@@ -21,7 +21,6 @@ const categoryMeta: Record<string, { labelEN: string; labelAR: string }> = {
   murals:  { labelEN: "Murals & Domes", labelAR: "الجداريات والقباب" },
 };
 
-// ✅ نحفظ فقط اسم الـ id للـ section مش الـ URL
 const sectionId: Record<string, string> = {
   ancient: "gallery",
   coptic:  "gallery",
@@ -50,16 +49,18 @@ export default function GalleryDetailPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [lb,    setLb]    = useState<number | null>(null);
 
+  /* ✅ Load from Supabase async */
   useEffect(() => {
-    const cfg = loadConfig();
-    const map: Record<string, Item[]> = {
-      ancient: cfg.galleryData.ancient,
-      coptic:  cfg.galleryData.coptic,
-      oil:     cfg.galleryData.oil,
-      various: cfg.variousWorks,
-      murals:  cfg.murals,
-    };
-    setItems(map[category] ?? []);
+    loadConfig().then(cfg => {
+      const map: Record<string, Item[]> = {
+        ancient: cfg.galleryData.ancient,
+        coptic:  cfg.galleryData.coptic,
+        oil:     cfg.galleryData.oil,
+        various: cfg.variousWorks,
+        murals:  cfg.murals,
+      };
+      setItems(map[category] ?? []);
+    });
   }, [category]);
 
   useEffect(() => {
@@ -89,8 +90,6 @@ export default function GalleryDetailPage() {
 
   const currentItem = lb !== null ? items[lb] : null;
 
-  // ✅ الحل الصح: نحفظ الـ section في sessionStorage ونروح لـ "/"
-  // الـ page.tsx هتقرأ الـ sessionStorage وتعمل lenis.scrollTo
   const handleBack = () => {
     const id = sectionId[category];
     if (id) sessionStorage.setItem("scrollToSection", id);
@@ -126,7 +125,6 @@ export default function GalleryDetailPage() {
 
             <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden"
               onClick={e => e.stopPropagation()}>
-
               <div className="flex-1 flex items-center justify-center relative p-8 md:p-16">
                 <button
                   className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition
@@ -219,25 +217,15 @@ export default function GalleryDetailPage() {
 
       <div className="pt-32 pb-24 px-10 md:px-28">
         <div className="flex items-center justify-between mb-16">
-
-          {/* ✅ زر الرجوع */}
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-2 text-neutral-400 hover:text-[#b8955a] text-sm tracking-widest uppercase transition"
-          >
+          <button onClick={handleBack}
+            className="flex items-center gap-2 text-neutral-400 hover:text-[#b8955a] text-sm tracking-widest uppercase transition">
             {isAR ? "→ العودة" : "← Back"}
           </button>
-
           <div className="text-center">
-            <p className="text-[9px] tracking-[0.55em] text-neutral-400 uppercase mb-3">
-              — {isAR ? "المعرض" : "Gallery"} —
-            </p>
-            <h1 className="font-light tracking-[0.4em] uppercase italic text-3xl md:text-4xl">
-              {metaLabel}
-            </h1>
+            <p className="text-[9px] tracking-[0.55em] text-neutral-400 uppercase mb-3">— {isAR ? "المعرض" : "Gallery"} —</p>
+            <h1 className="font-light tracking-[0.4em] uppercase italic text-3xl md:text-4xl">{metaLabel}</h1>
             <div className="w-8 h-[1px] bg-[#b8955a] mx-auto mt-6" />
           </div>
-
           <span className="text-neutral-500 text-sm">{items.length} {isAR ? "عمل" : "works"}</span>
         </div>
 
