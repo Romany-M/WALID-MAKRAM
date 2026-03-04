@@ -331,7 +331,11 @@ export default function Home() {
 
   /* ✅ Load from Supabase */
   useEffect(() => {
-    loadConfig().then(setCfg);
+    const load = async () => {
+      const data = await loadConfig();
+      setCfg(data);
+    };
+    load();
   }, []);
 
   const handlePreloaderDone = () => {

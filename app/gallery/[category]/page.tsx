@@ -51,7 +51,8 @@ export default function GalleryDetailPage() {
 
   /* ✅ Load from Supabase async */
   useEffect(() => {
-    loadConfig().then(cfg => {
+    const load = async () => {
+      const cfg = await loadConfig();
       const map: Record<string, Item[]> = {
         ancient: cfg.galleryData.ancient,
         coptic:  cfg.galleryData.coptic,
@@ -60,7 +61,8 @@ export default function GalleryDetailPage() {
         murals:  cfg.murals,
       };
       setItems(map[category] ?? []);
-    });
+    };
+    load();
   }, [category]);
 
   useEffect(() => {

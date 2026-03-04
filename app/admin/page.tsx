@@ -47,7 +47,7 @@ const NAV: { key: Section; en: string; ar: string; icon: string }[] = [
 const PASSWORD = "walidmakram";
 
 /* ══════════════════════════════════
-   InputField — يرفع الصورة على Supabase
+   InputField
 ══════════════════════════════════ */
 function InputField({
   label, labelAR, ph, value, onChange, span2 = false, uploadable = false,
@@ -123,7 +123,13 @@ export default function AdminDashboard() {
   const heroFileRef = useRef<HTMLInputElement>(null);
 
   /* ✅ Load from Supabase */
-  useEffect(() => { loadConfig().then(setCfg); }, []);
+  useEffect(() => {
+    const load = async () => {
+      const data = await loadConfig();
+      setCfg(data);
+    };
+    load();
+  }, []);
 
   useEffect(() => {
     setEditIdx(null); setEditItem(null);
