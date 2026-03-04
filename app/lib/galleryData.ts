@@ -1,3 +1,5 @@
+import { supabase } from "./supabase";
+
 export interface ArtItem {
   src: string;
   title: string; titleAR: string;
@@ -78,23 +80,54 @@ export const defaultConfig: GalleryConfig = {
   murals: defaultMurals,
 };
 
-export function loadConfig(): GalleryConfig {
-  if (typeof window === "undefined") return defaultConfig;
+/* ══════════════════════════════════
+   Supabase load / save
+══════════════════════════════════ */
+export async function loadConfig(): Promise<GalleryConfig> {
   try {
-    const s = localStorage.getItem("walid_gallery_config");
-    if (s) {
-      const p = JSON.parse(s);
-      return {
-        heroSrc:      p.heroSrc      || defaultConfig.heroSrc,
-        galleryData:  p.galleryData  || defaultConfig.galleryData,
-        variousWorks: p.variousWorks || defaultConfig.variousWorks,
-        murals:       p.murals       || defaultConfig.murals,
-      };
-    }
-  } catch {}
-  return defaultConfig;
+    const { data, error } = await supabase
+      .from("gallery_config")
+      .select("config")
+      .eq("id", 1)
+      .single();
+
+    if (error || !data?.config || Object.keys(data.config).length === 0)
+      return defaultConfig;
+
+    const p = data.config as Partial<GalleryConfig>;
+    return {
+      heroSrc:      p.heroSrc      || defaultConfig.heroSrc,
+      galleryData:  p.galleryData  || defaultConfig.galleryData,
+      variousWorks: p.variousWorks || defaultConfig.variousWorks,
+      murals:       p.murals       || defaultConfig.murals,
+    };
+  } catch {
+    return defaultConfig;
+  }
 }
 
-export function saveConfig(cfg: GalleryConfig): void {
-  localStorage.setItem("walid_gallery_config", JSON.stringify(cfg));
+export async function saveConfig(cfg: GalleryConfig): Promise<void> {
+  await supabase
+    .from("gallery_config")
+    .upsert({ id: 1, config: cfg, updated_at: new Date().toISOString() });
+}
+
+/* ══════════════════════════════════
+   Image upload to Supabase Storage
+══════════════════════════════════ */
+export async function uploadImage(file: File): Promise<string> {
+  const ext  = file.name.split(".").pop();
+  const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("gallery-images")
+    .upload(name, file, { cacheControl: "3600", upsert: false });
+
+  if (error) throw new Error(error.message);
+
+  const { data } = supabase.storage
+    .from("gallery-images")
+    .getPublicUrl(name);
+
+  return data.publicUrl;
 }

@@ -9,12 +9,6 @@ import {
   defaultConfig, loadConfig,
 } from "./lib/galleryData";
 
-/* ════════════════════════════════════════════════════
-   ✅ PRELOADER FIX:
-   متغير module-level — بيفضل true طول الجلسة
-   لأن Next.js App Router مش بيعيد تحميل الـ JS module
-   لما تعمل client-side navigation
-════════════════════════════════════════════════════ */
 let _preloaderShown = false;
 
 /* ── Socials ── */
@@ -35,17 +29,17 @@ function Preloader({ onDone }: { onDone: () => void }) {
       <motion.div className="absolute bottom-0 left-0 h-[1px] bg-[#b8955a]"
         initial={{ width:"0%" }} animate={{ width:"100%" }} transition={{ duration:1.4, ease:"easeInOut" }} />
       <motion.p className="text-[9px] tracking-[0.55em] text-neutral-400 uppercase mb-6"
-        initial={{ opacity:2 }} animate={{ opacity:2 }} transition={{ delay:0.3, duration:1 }}>
+        initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.3, duration:1 }}>
         — ARTIST —
       </motion.p>
       <motion.h1 className="text-white font-light tracking-[0.12em] uppercase text-center"
-        style={{ fontSize:"clamp(1.8rem,5vw,4rem)", color:"#b8955a" }}
-        initial={{ opacity:2, y:20 }} animate={{ opacity:2, y:0 }} transition={{ delay:0.1, duration:1.2 }}>
+        style={{ fontSize:"clamp(1.8rem,5vw,4rem)" }}
+        initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.5, duration:1.2 }}>
         WALID MAKRAM
       </motion.h1>
       <motion.h1 className="font-light tracking-[0.5em] uppercase text-center italic"
-        style={{ fontSize:"clamp(1.8rem,3vw,2rem)", color:"#ffffff" }}
-        initial={{ opacity:2, y:20 }} animate={{ opacity:2, y:0 }} transition={{ delay:0.1, duration:1.2 }}>
+        style={{ fontSize:"clamp(1.8rem,5vw,4rem)", color:"#b8955a" }}
+        initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.8, duration:1.2 }}>
         ART GALLERY
       </motion.h1>
     </motion.div>
@@ -231,7 +225,6 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
   const { lang } = useLang();
   const isAR = lang === "AR";
 
-  // ✅ لو رجعنا من coptic/oil، نبدأ بالـ tab الصح مش ancient دايماً
   const [active, setActive] = useState<"ancient"|"coptic"|"oil">(() => {
     if (typeof window === "undefined") return "ancient";
     const saved = sessionStorage.getItem("galleryActiveTab");
@@ -241,6 +234,7 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
     }
     return "ancient";
   });
+
   const [lb, setLb] = useState<number|null>(null);
   const items = data[active];
 
@@ -304,45 +298,46 @@ export default function Home() {
   const [muralLb,   setMuralLb]   = useState<number|null>(null);
   const [variousLb, setVariousLb] = useState<number|null>(null);
   const [cfg, setCfg] = useState<GalleryConfig>(defaultConfig);
-
-  /* ✅ PRELOADER: _preloaderShown بيفضل true بعد أول مرة طول الجلسة
-     لو المستخدم رجع من gallery → client-side navigation → _preloaderShown = true → loading = false فوراً */
   const [loading, setLoading] = useState(!_preloaderShown);
 
   useEffect(() => {
-    // ✅ لو localStorage فيه "preloaderShown" → مش هيظهر حتى بعد reload
     if (loading && localStorage.getItem("preloaderShown")) {
       _preloaderShown = true;
       setLoading(false);
     }
   }, []);
 
-  /* ✅ SCROLL: لما نرجع من gallery page، نعمل scroll للـ section الصح عن طريق Lenis */
+  /* ✅ SCROLL FIX */
   useEffect(() => {
-    const sectionId = sessionStorage.getItem("scrollToSection");
-    if (!sectionId) return;
-    sessionStorage.removeItem("scrollToSection");
-
-    // ننتظر Lenis يكون جاهز والصفحة تتمرندر
-    const tryScroll = (attempts = 0) => {
-      const lenis = (window as any).__lenis;
-      const el    = document.getElementById(sectionId);
-      if (lenis && el) {
-        lenis.scrollTo(el, { offset: -80, duration: 1.2 }); // offset عشان الـ navbar
-      } else if (attempts < 15) {
-        setTimeout(() => tryScroll(attempts + 1), 100);
-      }
-    };
-    setTimeout(() => tryScroll(), 200);
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    const targetId = sessionStorage.getItem("scrollToSection");
+    if (targetId) {
+      sessionStorage.removeItem("scrollToSection");
+      const tryScroll = (attempts = 0) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const lenis = (window as any).__lenis;
+        const el    = document.getElementById(targetId);
+        if (lenis && el) {
+          lenis.scrollTo(el, { offset: -80, duration: 1.2 });
+        } else if (attempts < 20) {
+          setTimeout(() => tryScroll(attempts + 1), 100);
+        }
+      };
+      setTimeout(() => tryScroll(), 300);
+    } else {
+      window.scrollTo(0, 0);
+    }
   }, []);
 
-  /* ── Load config ── */
-  useEffect(() => { setCfg(loadConfig()); }, []);
+  /* ✅ Load from Supabase */
+  useEffect(() => {
+    loadConfig().then(setCfg);
+  }, []);
 
   const handlePreloaderDone = () => {
     _preloaderShown = true;
     setLoading(false);
-    localStorage.setItem("preloaderShown", "true"); // ✅ بيفضل محفوظ حتى بعد الـ reload
+    localStorage.setItem("preloaderShown", "true");
   };
 
   return (
@@ -366,7 +361,6 @@ export default function Home() {
           <motion.div className="relative z-10"
             initial={{ opacity:0 }} animate={{ opacity:loading?0:1 }}
             transition={{ duration:1.4, delay:0.5 }}>
-
             {isAR ? (
               <div className="mb-4 flex flex-col items-center gap-3">
                 <h1 className="ar-hero-title text-center">وليد&ensp;مكرم</h1>
@@ -381,7 +375,6 @@ export default function Home() {
                 {t.hero_name[lang]}
               </h1>
             )}
-
             <p className={`text-base tracking-[0.4em] text-neutral-300 uppercase ${isAR?"ar-label":""}`}>
               {t.hero_sub[lang]}
             </p>
@@ -417,52 +410,41 @@ export default function Home() {
               {[...cfg.murals, ...cfg.murals].map((m,i)=>(
                 <div key={i} className="relative group flex-shrink-0 cursor-pointer w-[640px]"
                   onClick={()=>setMuralLb(i%cfg.murals.length)}>
-
-                  {/* ── البرواز الذهبي ── */}
                   <div className="absolute inset-0 z-10 pointer-events-none">
-                    {/* الإطار الخارجي */}
                     <div className="absolute inset-0 border border-[#b8955a]/60" />
-                    {/* الإطار الداخلي */}
                     <div className="absolute inset-[10px] border border-[#b8955a]/35" />
-                    {/* زوايا مزخرفة — top-left */}
                     <div className="absolute top-[4px] left-[4px] w-6 h-6 border-t-2 border-l-2 border-[#b8955a]" />
-                    {/* top-right */}
                     <div className="absolute top-[4px] right-[4px] w-6 h-6 border-t-2 border-r-2 border-[#b8955a]" />
-                    {/* bottom-left */}
                     <div className="absolute bottom-[4px] left-[4px] w-6 h-6 border-b-2 border-l-2 border-[#b8955a]" />
-                    {/* bottom-right */}
                     <div className="absolute bottom-[4px] right-[4px] w-6 h-6 border-b-2 border-r-2 border-[#b8955a]" />
-                    {/* نقاط الزوايا */}
                     <div className="absolute top-[3px] left-[3px] w-[5px] h-[5px] bg-[#b8955a]/80" />
                     <div className="absolute top-[3px] right-[3px] w-[5px] h-[5px] bg-[#b8955a]/80" />
                     <div className="absolute bottom-[3px] left-[3px] w-[5px] h-[5px] bg-[#b8955a]/80" />
                     <div className="absolute bottom-[3px] right-[3px] w-[5px] h-[5px] bg-[#b8955a]/80" />
-                    {/* glow عند الـ hover */}
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                       style={{ boxShadow:"inset 0 0 30px rgba(184,149,90,0.15), 0 0 25px rgba(184,149,90,0.2)" }} />
                   </div>
-
                   <div className="overflow-hidden">
-                  <img src={m.src}
-                    className="w-full h-[460px] object-cover object-top brightness-50 group-hover:brightness-90
-                               group-hover:scale-105 transition-all duration-700 ease-out"/>
-                  <div className="absolute inset-0 flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100
-                                  transition-all duration-500 bg-gradient-to-t from-black/90 via-black/30 to-transparent"
-                       dir={isAR?"rtl":"ltr"}>
-                    <p className="text-white text-[11px] tracking-[0.35em] uppercase font-medium drop-shadow mb-1">{isAR?m.titleAR:m.title}</p>
-                    <p className="text-[#f0cc8a] text-[9px] tracking-[0.3em] uppercase mb-4 drop-shadow">{isAR?m.locationAR:m.location}</p>
-                    <div className="flex flex-wrap gap-3 text-[9px] tracking-[0.25em] text-neutral-300 uppercase">
-                      <span>{isAR?m.mediumAR:m.medium}</span>
-                      <span className="text-neutral-600">·</span><span>{m.size}</span>
-                      <span className="text-neutral-600">·</span><span>{m.year}</span>
+                    <img src={m.src}
+                      className="w-full h-[460px] object-cover object-top brightness-50 group-hover:brightness-90
+                                 group-hover:scale-105 transition-all duration-700 ease-out"/>
+                    <div className="absolute inset-0 flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100
+                                    transition-all duration-500 bg-gradient-to-t from-black/90 via-black/30 to-transparent"
+                         dir={isAR?"rtl":"ltr"}>
+                      <p className="text-white text-[11px] tracking-[0.35em] uppercase font-medium drop-shadow mb-1">{isAR?m.titleAR:m.title}</p>
+                      <p className="text-[#f0cc8a] text-[9px] tracking-[0.3em] uppercase mb-4 drop-shadow">{isAR?m.locationAR:m.location}</p>
+                      <div className="flex flex-wrap gap-3 text-[9px] tracking-[0.25em] text-neutral-300 uppercase">
+                        <span>{isAR?m.mediumAR:m.medium}</span>
+                        <span className="text-neutral-600">·</span><span>{m.size}</span>
+                        <span className="text-neutral-600">·</span><span>{m.year}</span>
+                      </div>
+                    </div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                                    w-14 h-14 rounded-full border border-white/50 flex items-center justify-center
+                                    opacity-0 group-hover:opacity-100 transition-opacity duration-400 backdrop-blur-sm bg-black/20">
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-white fill-none" strokeWidth="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                     </div>
                   </div>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                                  w-14 h-14 rounded-full border border-white/50 flex items-center justify-center
-                                  opacity-0 group-hover:opacity-100 transition-opacity duration-400 backdrop-blur-sm bg-black/20">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-white fill-none" strokeWidth="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                  </div>
-                  </div>{/* end overflow-hidden */}
                 </div>
               ))}
             </div>
@@ -470,8 +452,8 @@ export default function Home() {
 
           <div className="text-center mt-20">
             <Link href="/gallery/murals"
-              className="group inline-flex items-center gap-4 border border-neutral-800 text-neutral-400
-                         px-12 py-4 tracking-[0.3em] text-sm uppercase
+              className="group inline-flex items-center gap-4 border border-neutral-400 dark:border-neutral-800
+                         text-neutral-600 dark:text-neutral-400 px-12 py-4 tracking-[0.3em] text-sm uppercase
                          hover:bg-[#b8955a] hover:border-[#b8955a] hover:text-white transition duration-500">
               {t.explore_murals[lang]}
               <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
@@ -537,7 +519,7 @@ export default function Home() {
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-3 px-5 py-3 border border-neutral-300 dark:border-neutral-700
                                text-[11px] tracking-[0.35em] uppercase font-medium
-                           text-neutral-700 dark:text-neutral-300 transition-all duration-400 group"
+                               text-neutral-700 dark:text-neutral-300 transition-all duration-400 group"
                     onMouseEnter={e=>{const el=e.currentTarget;el.style.borderColor=s.color;el.style.color=s.color;}}
                     onMouseLeave={e=>{const el=e.currentTarget;el.style.borderColor="";el.style.color="";}}>
                     <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current flex-shrink-0"><path d={s.path}/></svg>
@@ -565,24 +547,26 @@ export default function Home() {
                   <label htmlFor={f.id} className="block text-[11px] tracking-[0.4em] uppercase text-neutral-600 dark:text-neutral-300 pt-5 pb-1 font-medium">{f.label}</label>
                   <input id={f.id} type={f.type} placeholder={f.placeholder}
                     className="w-full bg-transparent border-b-2 border-neutral-400 dark:border-neutral-600
-                              pb-3 text-base tracking-[0.1em] text-neutral-900 dark:text-white
-                              placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none transition-all duration-300"/>
+                               pb-3 text-base tracking-[0.1em] text-neutral-900 dark:text-white
+                               placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none transition-all duration-300"/>
                   <span className={`absolute bottom-0 ${isAR?"right-0":"left-0"} w-0 h-[2px] bg-[#b8955a] group-focus-within:w-full transition-all duration-500`}/>
                 </div>
               ))}
               <div className="relative group">
                 <label htmlFor="message" className="block text-[11px] tracking-[0.4em] uppercase text-neutral-600 dark:text-neutral-300 pt-6 pb-1 font-medium">{t.message[lang]}</label>
                 <textarea id="message" placeholder={t.msg_ph[lang]}
-                  className="w-full bg-transparent border-b-2 border-neutral-400 dark:border-neutral-600                   pb-3 text-base tracking-[0.1em] text-neutral-900 dark:text-white
-                          placeholder:text-neutral-400 dark:placeholder:text-neutral-500
-                          focus:outline-none resize-none h-32 transition-all duration-300"/>
+                  className="w-full bg-transparent border-b-2 border-neutral-400 dark:border-neutral-600
+                             pb-3 text-base tracking-[0.1em] text-neutral-900 dark:text-white
+                             placeholder:text-neutral-400 dark:placeholder:text-neutral-500
+                             focus:outline-none resize-none h-32 transition-all duration-300"/>
                 <span className={`absolute bottom-0 ${isAR?"right-0":"left-0"} w-0 h-[2px] bg-[#b8955a] group-focus-within:w-full transition-all duration-500`}/>
               </div>
               <button className="mt-14 group flex items-center justify-between w-full
-                            border-2 border-neutral-500 dark:border-neutral-400 px-8 py-4
-                                text-[11px] tracking-[0.4em] uppercase font-medium
-                                text-neutral-800 dark:text-neutral-200                       hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black
-                                hover:border-transparent transition-all duration-500">
+                                 border-2 border-neutral-500 dark:border-neutral-400 px-8 py-4
+                                 text-[11px] tracking-[0.4em] uppercase font-medium
+                                 text-neutral-800 dark:text-neutral-200
+                                 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black
+                                 hover:border-transparent transition-all duration-500">
                 {t.send[lang]}
                 <span className="group-hover:translate-x-2 transition-transform duration-300">{isAR?"←":"→"}</span>
               </button>
@@ -590,7 +574,7 @@ export default function Home() {
                 {socials.map(s=>(
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                     className="text-neutral-600 dark:text-neutral-300 hover:text-[#b8955a] dark:hover:text-[#b8955a]
-                            transition duration-300 flex items-center gap-2 text-[11px] tracking-[0.35em] uppercase font-medium">
+                               transition duration-300 flex items-center gap-2 text-[11px] tracking-[0.35em] uppercase font-medium">
                     <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current flex-shrink-0"><path d={s.path}/></svg>
                     {s.label}
                   </a>
@@ -602,19 +586,16 @@ export default function Home() {
 
         {/* ── FOOTER ── */}
         <footer className="bg-neutral-200 dark:bg-black border-t border-neutral-300 dark:border-neutral-800 py-8 px-10">
-          <div className="max-w-4xl mx-auto flex flex-col items-center gap-0" dir={isAR?"rtl":"ltr"}>
-            {/* فوق الخط */}
+          <div className="max-w-4xl mx-auto flex flex-col items-center" dir={isAR?"rtl":"ltr"}>
             <p className="text-[11px] tracking-[0.5em] uppercase text-neutral-600 dark:text-neutral-400 pb-5">
               {isAR ? "وليد مكرم © 2026" : "WALID MAKRAM © 2026"}
             </p>
-            {/* الخط */}
             <div className="w-full h-[1px] bg-neutral-300 dark:bg-neutral-800"/>
-            {/* تحت الخط — لينكات التواصل */}
             <div className="flex gap-8 pt-5">
               {socials.map(s=>(
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                   className="text-neutral-500 dark:text-neutral-600 hover:text-[#b8955a] dark:hover:text-[#b8955a]
-                          transition duration-300 text-[10px] tracking-[0.35em] uppercase">
+                             transition duration-300 text-[10px] tracking-[0.35em] uppercase">
                   {s.label}
                 </a>
               ))}

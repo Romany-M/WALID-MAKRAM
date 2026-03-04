@@ -3,7 +3,7 @@ import Navbar from "./components/Navbar";
 import LenisProvider from "./components/LenisProvider";
 import { LanguageProvider } from "./components/LanguageContext";
 import { Cormorant_Garamond, Amiri, Almarai } from "next/font/google";
-
+<link rel="icon" href="/favicon.ico" />
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
