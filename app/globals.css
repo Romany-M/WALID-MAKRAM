@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* ── Dark mode via class ── */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,15 +15,143 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.glow {
+  text-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+
+@keyframes scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-scroll {
+  animation: scroll 40s linear infinite;
+}
+
+/* ══════════════════════════════
+   ARABIC TYPOGRAPHY SYSTEM
+══════════════════════════════ */
+
+/* عناوين رئيسية — Amiri مع تدرج ذهبي — نفس مقاس الإنجليزي */
+.ar-hero-title {
+  font-family: var(--font-amiri), serif;
+  font-size: clamp(1.875rem, 5vw, 3.75rem);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  word-spacing: 0.4em;
+  background: linear-gradient(160deg, #ffffff 0%, #e8d5a3 40%, #b8955a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+}
+
+/* اقتباسات — Amiri italic */
+.ar-quote {
+  font-family: var(--font-amiri), serif;
+  font-size: 1.25rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 2;
+  color: #d4d4d4;
+}
+
+/* نصوص وصفية — Almarai */
+.ar-description {
+  font-family: var(--font-almarai), sans-serif;
+  font-size: 1.15rem;
+  font-weight: 300;
+  line-height: 2;
+  color: #d4d4d4;
+  text-align: justify;
+  max-width: 600px;
+}
+
+/* عناوين أقسام — Almarai medium */
+.ar-section-title {
+  font-family: var(--font-almarai), sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+/* تفاصيل اللوحات — Almarai صغير */
+.ar-card-text {
+  font-family: var(--font-almarai), sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.8;
+}
+
+/* nav links عربي */
+.ar-nav-link {
+  font-family: var(--font-almarai), sans-serif;
+  font-size: 0.875rem;   /* = text-sm = 14px */
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+/* labels صغيرة — Almarai */
+.ar-label {
+  font-family: var(--font-almarai), sans-serif;
+  font-size: 0.7rem;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+
+/* في الـ Light mode نغير لون النصوص الطويلة */
+.light .ar-description,
+.light .ar-quote {
+  color: #404040;
+}
+@import "tailwindcss";
+
+/* ── Dark mode via class (not media query) ── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.glow {
+  text-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+
+@keyframes scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll {
+  animation: scroll 40s linear infinite;
+}
+
+/* ── Murals outline text — بيتغير مع الـ dark/light mode ── */
+.murals-outline-text {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.2); /* light mode */
+}
+.dark .murals-outline-text {
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2); /* dark mode */
 }
