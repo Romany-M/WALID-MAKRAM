@@ -289,6 +289,114 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
   );
 }
 
+/* ══════════════════════════════════
+   CONTACT FORM
+══════════════════════════════════ */
+function ContactForm() {
+  const { lang } = useLang();
+  const isAR = lang === "AR";
+  const [form, setForm]     = useState({ name:"", email:"", subject:"", message:"" });
+  const [status, setStatus] = useState<"idle"|"sending"|"sent"|"error">("idle");
+
+  const set = (k: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const handleSend = async () => {
+    if (!form.name || !form.email || !form.message) return;
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/contact", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error();
+      setStatus("sent");
+      setForm({ name:"", email:"", subject:"", message:"" });
+      setTimeout(() => setStatus("idle"), 4000);
+    } catch {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }}
+      viewport={{ once:true }} transition={{ duration:1 }}
+      className="w-full max-w-xl" dir={isAR ? "rtl" : "ltr"}>
+
+      <SectionHeader label={t.commission[lang]} title={t.contact_title[lang]} />
+
+      <div className="flex flex-col gap-0">
+        {([
+          { placeholder:t.name_ph[lang],  type:"text",  id:"name",    label:t.name[lang],    k:"name"    },
+          { placeholder:t.email_ph[lang], type:"email", id:"email",   label:t.email[lang],   k:"email"   },
+          { placeholder:t.sub_ph[lang],   type:"text",  id:"subject", label:t.subject[lang], k:"subject" },
+        ] as const).map(f => (
+          <div key={f.id} className="relative group">
+            <label htmlFor={f.id}
+              className="block text-[11px] tracking-[0.4em] uppercase text-neutral-600 dark:text-neutral-300 pt-5 pb-1 font-medium">
+              {f.label}
+            </label>
+            <input id={f.id} type={f.type} placeholder={f.placeholder}
+              value={form[f.k]} onChange={set(f.k)}
+              className="w-full bg-transparent border-b-2 border-neutral-400 dark:border-neutral-600
+                         pb-3 text-base tracking-[0.1em] text-neutral-900 dark:text-white
+                         placeholder:text-neutral-400 dark:placeholder:text-neutral-500
+                         focus:outline-none transition-all duration-300"/>
+            <span className={`absolute bottom-0 ${isAR?"right-0":"left-0"} w-0 h-[2px] bg-[#b8955a] group-focus-within:w-full transition-all duration-500`}/>
+          </div>
+        ))}
+
+        <div className="relative group">
+          <label htmlFor="message"
+            className="block text-[11px] tracking-[0.4em] uppercase text-neutral-600 dark:text-neutral-300 pt-6 pb-1 font-medium">
+            {t.message[lang]}
+          </label>
+          <textarea id="message" placeholder={t.msg_ph[lang]}
+            value={form.message} onChange={set("message")}
+            className="w-full bg-transparent border-b-2 border-neutral-400 dark:border-neutral-600
+                       pb-3 text-base tracking-[0.1em] text-neutral-900 dark:text-white
+                       placeholder:text-neutral-400 dark:placeholder:text-neutral-500
+                       focus:outline-none resize-none h-32 transition-all duration-300"/>
+          <span className={`absolute bottom-0 ${isAR?"right-0":"left-0"} w-0 h-[2px] bg-[#b8955a] group-focus-within:w-full transition-all duration-500`}/>
+        </div>
+
+        <button onClick={handleSend} disabled={status === "sending"}
+          className={`mt-14 group flex items-center justify-between w-full border-2 px-8 py-4
+                     text-[11px] tracking-[0.4em] uppercase font-medium transition-all duration-500 disabled:opacity-60
+                     ${status === "sent"
+                       ? "border-green-500 bg-green-500 text-white"
+                       : status === "error"
+                       ? "border-red-500 text-red-500"
+                       : "border-neutral-500 dark:border-neutral-400 text-neutral-800 dark:text-neutral-200 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black hover:border-transparent"}`}>
+          {status === "sending" ? (isAR ? "جاري الإرسال..." : "Sending...")
+           : status === "sent"  ? (isAR ? "تم الإرسال ✓"   : "Sent ✓")
+           : status === "error" ? (isAR ? "حدث خطأ، حاول مجدداً" : "Error, try again")
+           : t.send[lang]}
+          {status === "idle" && (
+            <span className="group-hover:translate-x-2 transition-transform duration-300">
+              {isAR ? "←" : "→"}
+            </span>
+          )}
+        </button>
+
+        <div className="flex justify-center gap-10 mt-14">
+          {socials.map(s=>(
+            <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+              className="text-neutral-600 dark:text-neutral-300 hover:text-[#b8955a] dark:hover:text-[#b8955a]
+                         transition duration-300 flex items-center gap-2 text-[11px] tracking-[0.35em] uppercase font-medium">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current flex-shrink-0"><path d={s.path}/></svg>
+              {s.label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 /* ════════════════════════════════
    PAGE
 ════════════════════════════════ */
@@ -537,55 +645,7 @@ export default function Home() {
 
         {/* ── CONTACT ── */}
         <section id="contact" className="bg-neutral-100 dark:bg-neutral-950 py-40 px-6 flex items-center justify-center">
-          <motion.div initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} transition={{ duration:1 }}
-            className="w-full max-w-xl" dir={isAR?"rtl":"ltr"}>
-            <SectionHeader label={t.commission[lang]} title={t.contact_title[lang]}/>
-            <div className="flex flex-col gap-0">
-              {[
-                { placeholder:t.name_ph[lang],  type:"text",  id:"name",    label:t.name[lang]    },
-                { placeholder:t.email_ph[lang], type:"email", id:"email",   label:t.email[lang]   },
-                { placeholder:t.sub_ph[lang],   type:"text",  id:"subject", label:t.subject[lang] },
-              ].map((f,i)=>(
-                <div key={i} className="relative group">
-                  <label htmlFor={f.id} className="block text-[11px] tracking-[0.4em] uppercase text-neutral-600 dark:text-neutral-300 pt-5 pb-1 font-medium">{f.label}</label>
-                  <input id={f.id} type={f.type} placeholder={f.placeholder}
-                    className="w-full bg-transparent border-b-2 border-neutral-400 dark:border-neutral-600
-                               pb-3 text-base tracking-[0.1em] text-neutral-900 dark:text-white
-                               placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none transition-all duration-300"/>
-                  <span className={`absolute bottom-0 ${isAR?"right-0":"left-0"} w-0 h-[2px] bg-[#b8955a] group-focus-within:w-full transition-all duration-500`}/>
-                </div>
-              ))}
-              <div className="relative group">
-                <label htmlFor="message" className="block text-[11px] tracking-[0.4em] uppercase text-neutral-600 dark:text-neutral-300 pt-6 pb-1 font-medium">{t.message[lang]}</label>
-                <textarea id="message" placeholder={t.msg_ph[lang]}
-                  className="w-full bg-transparent border-b-2 border-neutral-400 dark:border-neutral-600
-                             pb-3 text-base tracking-[0.1em] text-neutral-900 dark:text-white
-                             placeholder:text-neutral-400 dark:placeholder:text-neutral-500
-                             focus:outline-none resize-none h-32 transition-all duration-300"/>
-                <span className={`absolute bottom-0 ${isAR?"right-0":"left-0"} w-0 h-[2px] bg-[#b8955a] group-focus-within:w-full transition-all duration-500`}/>
-              </div>
-              <button className="mt-14 group flex items-center justify-between w-full
-                                 border-2 border-neutral-500 dark:border-neutral-400 px-8 py-4
-                                 text-[11px] tracking-[0.4em] uppercase font-medium
-                                 text-neutral-800 dark:text-neutral-200
-                                 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black
-                                 hover:border-transparent transition-all duration-500">
-                {t.send[lang]}
-                <span className="group-hover:translate-x-2 transition-transform duration-300">{isAR?"←":"→"}</span>
-              </button>
-              <div className="flex justify-center gap-10 mt-14">
-                {socials.map(s=>(
-                  <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                    className="text-neutral-600 dark:text-neutral-300 hover:text-[#b8955a] dark:hover:text-[#b8955a]
-                               transition duration-300 flex items-center gap-2 text-[11px] tracking-[0.35em] uppercase font-medium">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current flex-shrink-0"><path d={s.path}/></svg>
-                    {s.label}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </motion.div>
+          <ContactForm />
         </section>
 
         {/* ── FOOTER ── */}
