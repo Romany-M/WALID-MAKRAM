@@ -2,14 +2,22 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import LenisProvider from "./components/LenisProvider";
 import { LanguageProvider } from "./components/LanguageContext";
-import { Cormorant_Garamond, Amiri, Almarai } from "next/font/google";
-<link rel="icon" href="/favicon.ico" />
+import { Cormorant_Garamond, Amiri, Almarai, Outfit } from "next/font/google";
+
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
   display: "swap",
   variable: "--font-cormorant",
+});
+
+/* ✅ خط جديد للـ UI — واضح وحديث */
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  display: "swap",
+  variable: "--font-outfit",
 });
 
 const amiri = Amiri({
@@ -35,7 +43,10 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${cormorant.variable} ${amiri.variable} ${almarai.variable} ${cormorant.className}`}>
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+      </head>
+      <body className={`${cormorant.variable} ${outfit.variable} ${amiri.variable} ${almarai.variable} ${outfit.className}`}>
         <LanguageProvider>
           <LenisProvider>
             <Navbar />
