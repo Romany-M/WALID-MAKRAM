@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLang, t } from "./components/LanguageContext";
 import {
   ArtItem, MuralItem, GalleryConfig,
@@ -86,7 +86,6 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
         ${isDark ? "bg-black/97 text-white" : "bg-white/97 text-neutral-900"}`}
       onClick={onClose} dir={isAR ? "rtl" : "ltr"}>
 
-      {/* Header */}
       <div className={`flex justify-between items-center px-4 md:px-8 py-4 md:py-5 flex-shrink-0 border-b
         ${isDark ? "border-white/10" : "border-neutral-200"}`}>
         <span className={`text-xs tracking-[0.5em] font-light ${isDark ? "text-white/40" : "text-neutral-400"}`}>
@@ -103,7 +102,6 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
 
       <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden"
         onClick={e => e.stopPropagation()}>
-        {/* Image area */}
         <div className="flex-1 flex items-center justify-center relative p-4 md:p-16 overflow-hidden min-h-0">
           <button className={`absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 md:w-12 h-16 md:h-20
             flex items-center justify-center text-4xl md:text-5xl transition z-10
@@ -124,7 +122,6 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
             onClick={() => onNav((index+1)%total)}>›</button>
         </div>
 
-        {/* Info panel */}
         <motion.div key={`info-${index}`}
           initial={{ opacity:0, x: isAR ? -24 : 24 }} animate={{ opacity:1, x:0 }}
           transition={{ duration:0.5, delay:0.1 }}
@@ -200,11 +197,12 @@ function ArtCard({ src, title, titleAR, medium, mediumAR, dims, year, location, 
           <p className="text-[#f0cc8a] text-[8px] md:text-[9px] tracking-[0.3em] mt-1">{isAR?locationAR:location}</p>
         </div>
       </div>
+      {/* ✅ Fix: overflow-hidden على الـ text container */}
       <div className="mt-3 md:mt-4 pb-3 border-b border-neutral-200 dark:border-neutral-800 flex justify-between items-baseline gap-2 md:gap-3"
            dir={isAR?"rtl":"ltr"}>
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <h4 className={`uppercase font-medium leading-relaxed truncate ${isAR?"ar-card-text":"text-[9px] md:text-[10px] tracking-[0.25em]"}`}>{isAR?titleAR:title}</h4>
-          <p className={`italic mt-1 ${isAR?"ar-card-text":"text-[8px] md:text-[9px] text-neutral-500 tracking-wide"}`}>{isAR?mediumAR:medium}</p>
+          <p className={`italic mt-1 truncate ${isAR?"ar-card-text":"text-[8px] md:text-[9px] text-neutral-500 tracking-wide"}`}>{isAR?mediumAR:medium}</p>
         </div>
         <div className={`flex-shrink-0 ${isAR?"text-left":"text-right"}`}>
           <span className="text-[8px] md:text-[9px] tracking-widest text-neutral-400 block">{dims}</span>
@@ -268,16 +266,19 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
       <section id="gallery" className="px-4 sm:px-8 md:px-28 py-20 md:py-40">
         <SectionHeader label={t.selected_works[lang]} title={t.gallery_title[lang]} />
 
-        {/* Tabs */}
+        {/* ✅ Fix: tabs — tracking أصغر على موبايل + overflow-hidden */}
         <div className="flex items-center justify-center mb-10 md:mb-20 px-2" dir={isAR?"rtl":"ltr"}>
           <div className="flex border border-neutral-200 dark:border-neutral-800 w-full max-w-md md:w-auto">
             {galleryTabs.map(tab=>(
               <button key={tab.key}
                 onClick={()=>{ setActive(tab.key as "ancient"|"coptic"|"oil"); setLb(null); }}
-                className={`relative flex-1 md:flex-none px-3 sm:px-6 md:px-10 py-2.5 md:py-3
-                  text-[8px] sm:text-[9px] tracking-[0.3em] md:tracking-[0.4em] uppercase transition-all duration-500
+                className={`relative flex-1 md:flex-none px-2 sm:px-6 md:px-10 py-2.5 md:py-3
+                  text-[7px] sm:text-[9px] tracking-[0.1em] sm:tracking-[0.3em] md:tracking-[0.4em]
+                  uppercase transition-all duration-500 overflow-hidden whitespace-nowrap
                   border-r border-neutral-200 dark:border-neutral-800 last:border-r-0
-                  ${active===tab.key?"bg-neutral-900 dark:bg-white text-white dark:text-black":"text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"}`}>
+                  ${active===tab.key
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-black"
+                    : "text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"}`}>
                 {tab.label}
                 {active===tab.key&&<motion.span layoutId="tab-line" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#b8955a]"/>}
               </button>
@@ -290,16 +291,23 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
           {items.map((item,i)=><ArtCard key={i} {...item} delay={i*0.07} onClick={()=>setLb(i)}/>)}
         </motion.div>
 
-        <div className="text-center mt-10 md:mt-20">
-          <Link href={`/gallery/${active}`}
-            className="inline-flex items-center gap-3 md:gap-4 border border-neutral-300 dark:border-neutral-700
-                       px-6 md:px-10 py-2.5 md:py-3 text-xs md:text-sm tracking-[0.2em] md:tracking-[0.3em] uppercase
-                       hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black
-                       hover:border-transparent transition-all duration-500 group">
-            {exploreLabels[active]}
-            <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
-          </Link>
-        </div>
+       <div className="text-center mt-10 md:mt-20">
+  <Link
+    href={`/gallery/${active}`}
+    onClick={() => {
+      // ✅ لما يرجع back يلاقي نفس التاب ومسكرول على gallery
+      sessionStorage.setItem("galleryActiveTab", active);
+      sessionStorage.setItem("scrollToSection", "gallery");
+    }}
+    className="inline-flex items-center gap-3 md:gap-4 border border-neutral-300 dark:border-neutral-700
+               px-6 md:px-10 py-2.5 md:py-3 text-xs md:text-sm tracking-[0.2em] md:tracking-[0.3em] uppercase
+               hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black
+               hover:border-transparent transition-all duration-500 group">
+    {exploreLabels[active]}
+    <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
+  </Link>
+</div>
+
       </section>
     </>
   );
@@ -416,6 +424,10 @@ export default function Home() {
   const [variousLb, setVariousLb] = useState<number|null>(null);
   const [cfg, setCfg] = useState<GalleryConfig>(defaultConfig);
   const [loading, setLoading] = useState(!_preloaderShown);
+
+  // ✅ Fix: artist photo colorize on scroll
+  const artistImgRef = useRef(null);
+  const artistInView = useInView(artistImgRef, { once: true, margin: "-80px" });
 
   useEffect(() => {
     if (loading && localStorage.getItem("preloaderShown")) {
@@ -561,15 +573,20 @@ export default function Home() {
           </div>
 
           <div className="text-center mt-10 md:mt-20 px-4">
-            <Link href="/gallery/murals"
-              className="group inline-flex items-center gap-3 md:gap-4 border border-neutral-400 dark:border-neutral-800
-                         text-neutral-600 dark:text-neutral-400 px-8 md:px-12 py-3 md:py-4
-                         tracking-[0.2em] md:tracking-[0.3em] text-xs md:text-sm uppercase
-                         hover:bg-[#b8955a] hover:border-[#b8955a] hover:text-white transition duration-500">
-              {t.explore_murals[lang]}
-              <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
-            </Link>
-          </div>
+  <Link
+    href="/gallery/murals"
+    onClick={() => {
+      sessionStorage.setItem("scrollToSection", "murals");
+    }}
+    className="group inline-flex items-center gap-3 md:gap-4 border border-neutral-400 dark:border-neutral-800
+               text-neutral-600 dark:text-neutral-400 px-8 md:px-12 py-3 md:py-4
+               tracking-[0.2em] md:tracking-[0.3em] text-xs md:text-sm uppercase
+               hover:bg-[#b8955a] hover:border-[#b8955a] hover:text-white transition duration-500">
+    {t.explore_murals[lang]}
+    <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
+  </Link>
+</div>
+
         </section>
 
         {/* ── VARIOUS WORKS ── */}
@@ -580,15 +597,19 @@ export default function Home() {
             {cfg.variousWorks.map((item,i)=><ArtCard key={i} {...item} delay={i*0.07} onClick={()=>setVariousLb(i)}/>)}
           </div>
           <div className="text-center mt-10 md:mt-20">
-            <Link href="/gallery/various"
-              className="inline-flex items-center gap-3 md:gap-4 border border-neutral-300 dark:border-neutral-700
-                         px-6 md:px-10 py-2.5 md:py-3 text-xs md:text-sm tracking-[0.2em] md:tracking-[0.3em] uppercase
-                         hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black
-                         hover:border-transparent transition-all duration-500 group">
-              {t.explore_various[lang]}
-              <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
-            </Link>
-          </div>
+  <Link
+    href="/gallery/various"
+    onClick={() => {
+      sessionStorage.setItem("scrollToSection", "various");
+    }}
+    className="inline-flex items-center gap-3 md:gap-4 border border-neutral-300 dark:border-neutral-700
+               px-6 md:px-10 py-2.5 md:py-3 text-xs md:text-sm tracking-[0.2em] md:tracking-[0.3em] uppercase
+               hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black
+               hover:border-transparent transition-all duration-500 group">
+    {t.explore_various[lang]}
+    <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
+  </Link>
+</div>
         </section>
 
         {/* ── ABOUT ── */}
@@ -600,9 +621,15 @@ export default function Home() {
               transition={{ duration:1.5 }} viewport={{ once:true }}>
               <div className="absolute -inset-6 border border-[#b8955a]/30 translate-x-12 translate-y-12 hidden md:block"/>
               <div className="relative overflow-hidden aspect-[3/4] shadow-2xl max-w-sm mx-auto lg:max-w-none">
-                <motion.img src="/icons/artist.png" alt="Walid Makram"
-                  className="w-full h-full object-cover object-top grayscale hover:grayscale-0 transition-all duration-[2s]"
-                  whileHover={{ scale:1.05 }}/>
+                {/* ✅ Fix: grayscale → color أوتوماتيك لما الصورة تدخل الشاشة */}
+                <motion.img
+                  ref={artistImgRef}
+                  src="/icons/artist.png"
+                  alt="Walid Makram"
+                  className="w-full h-full object-cover object-top transition-all duration-[2500ms] ease-in-out"
+                  style={{ filter: artistInView ? "grayscale(0%)" : "grayscale(100%)" }}
+                  whileHover={{ scale: 1.05 }}
+                />
               </div>
               <p className="mt-6 md:mt-8 text-[10px] tracking-[0.5em] uppercase text-neutral-400 text-center">
                 {t.artist_caption[lang]}

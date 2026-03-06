@@ -47,7 +47,7 @@ const NAV: { key: Section; en: string; ar: string; icon: string }[] = [
 const PASSWORD = "walidmakram";
 
 /* ══════════════════════════════════
-   InputField
+   InputField — يرفع الصورة على Supabase
 ══════════════════════════════════ */
 function InputField({
   label, labelAR, ph, value, onChange, span2 = false, uploadable = false,
@@ -123,13 +123,7 @@ export default function AdminDashboard() {
   const heroFileRef = useRef<HTMLInputElement>(null);
 
   /* ✅ Load from Supabase */
-  useEffect(() => {
-    const load = async () => {
-      const data = await loadConfig();
-      setCfg(data);
-    };
-    load();
-  }, []);
+  useEffect(() => { loadConfig().then(setCfg); }, []);
 
   useEffect(() => {
     setEditIdx(null); setEditItem(null);
@@ -275,14 +269,20 @@ export default function AdminDashboard() {
           </div>
           <div className="flex gap-3">
             <button onClick={handleReset} disabled={saving}
-              className="px-4 py-2 text-xs tracking-wider uppercase border border-red-900/50 text-red-500 hover:bg-red-900/20 rounded transition disabled:opacity-40">
-              Reset All
+              className="px-5 py-2.5 text-sm font-bold tracking-wider uppercase border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition disabled:opacity-40">
+              🗑 Reset
             </button>
             <button onClick={handleSave} disabled={saving}
-              className={`px-6 py-2 text-xs tracking-wider uppercase rounded font-medium transition-all flex items-center gap-2
-                ${saved ? "bg-green-600 text-white" : "bg-[#b8955a] hover:bg-[#a07848] text-black"} disabled:opacity-60`}>
-              {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
-              {saved ? "✓ Saved!" : saving ? "Saving..." : "Save Changes"}
+              className={`px-8 py-2.5 text-sm font-bold tracking-wider uppercase rounded-lg transition-all flex items-center gap-2 shadow-lg
+                ${saved
+                  ? "bg-green-500 text-white shadow-green-500/30"
+                  : "bg-[#b8955a] hover:bg-[#a07848] text-black shadow-[#b8955a]/30"
+                } disabled:opacity-60`}>
+              {saving
+                ? <><span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> Saving...</>
+                : saved
+                ? "✓ Saved!"
+                : "💾 Save Changes"}
             </button>
           </div>
         </header>

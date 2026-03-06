@@ -2,14 +2,20 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang, t } from "./LanguageContext";
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [active,   setActive]   = useState<string>("");
   const [isDark,   setIsDark]   = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, toggleLang } = useLang();
+
+  if (pathname?.startsWith("/admin")) return null;
+
+  const isHome = pathname === "/";
 
   const links = [
     { nameKey: "gallery",      href: "#gallery", id: "gallery"  },
@@ -21,8 +27,9 @@ export default function Navbar() {
 
   useEffect(() => { document.documentElement.classList.add("dark"); }, []);
 
-  /* ── Scroll Spy ── */
+  /* ── Scroll Spy (home only) ── */
   useEffect(() => {
+    if (!isHome) return;
     const handleScroll = () => {
       const middle = window.scrollY + window.innerHeight / 2;
       let current = "";
@@ -37,16 +44,14 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isHome]);
 
-  /* ── Close menu on resize to desktop ── */
   useEffect(() => {
     const onResize = () => { if (window.innerWidth >= 768) setMenuOpen(false); };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  /* ── Lock body scroll when menu open ── */
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -59,26 +64,24 @@ export default function Navbar() {
     setIsDark(!isDark);
   };
 
-  const handleLinkClick = (nameKey: string) => {
+  /* ✅ لو في subpage → احفظ القسم في sessionStorage وروح لـ / */
+  const handleNavClick = (id: string, nameKey: string) => {
     setActive(nameKey);
     setMenuOpen(false);
+    if (!isHome) {
+      sessionStorage.setItem("scrollToSection", id);
+    }
   };
 
   return (
     <>
-      {/* ══════════════════════════════
-          HEADER
-      ══════════════════════════════ */}
       <header className="fixed top-0 w-full z-50 backdrop-blur-md
                          bg-white/90 dark:bg-[#0f0f0f]/90
                          border-b border-neutral-200/60 dark:border-neutral-800/40">
         <div className="flex items-center justify-between px-5 py-4 md:hidden">
-          {/* Logo / Name on mobile */}
           <span className="text-[10px] tracking-[0.35em] uppercase text-neutral-700 dark:text-neutral-300 font-light">
             Walid Makram
           </span>
-
-          {/* Hamburger */}
           <button
             onClick={() => setMenuOpen(o => !o)}
             aria-label="Toggle menu"
@@ -99,7 +102,10 @@ export default function Navbar() {
           dir={lang === "AR" ? "rtl" : "ltr"}>
           {links.map(link => (
             <div key={link.nameKey} className="relative">
-              <Link href={link.href} onClick={() => handleLinkClick(link.nameKey)}
+              {/* ✅ لو home → anchor link، لو subpage → روح لـ / */}
+              <Link
+                href={isHome ? link.href : "/"}
+                onClick={() => handleNavClick(link.id, link.nameKey)}
                 className={`transition duration-300
                   ${lang === "AR" ? "ar-nav-link" : "text-[10px] tracking-[0.25em] uppercase"}
                   ${active === link.nameKey
@@ -114,9 +120,7 @@ export default function Navbar() {
         </nav>
       </header>
 
-      {/* ══════════════════════════════
-          MOBILE MENU OVERLAY
-      ══════════════════════════════ */}
+      {/* ── Mobile Menu ── */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -133,7 +137,9 @@ export default function Navbar() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.07 }}>
-                <Link href={link.href} onClick={() => handleLinkClick(link.nameKey)}
+                <Link
+                  href={isHome ? link.href : "/"}
+                  onClick={() => handleNavClick(link.id, link.nameKey)}
                   className={`block text-center transition duration-300
                     ${lang === "AR"
                       ? "font-almarai text-2xl font-light tracking-wide"
@@ -145,8 +151,6 @@ export default function Navbar() {
                 </Link>
               </motion.div>
             ))}
-
-            {/* Theme + Lang inside mobile menu */}
             <div className="flex gap-4 mt-6">
               <button onClick={toggleLang}
                 className="px-5 py-2 border border-neutral-300 dark:border-neutral-700 rounded-full
@@ -165,11 +169,8 @@ export default function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* ══════════════════════════════
-          FLOATING CONTROLS (desktop only)
-      ══════════════════════════════ */}
+      {/* ── Floating Controls (desktop) ── */}
       <div className="hidden md:flex fixed bottom-8 right-8 z-50 flex-col gap-3">
-        {/* Language */}
         <button onClick={toggleLang} aria-label="Toggle language"
           className="relative w-11 h-11 flex items-center justify-center rounded-full
                      bg-[#0f0f0f]/80 border border-neutral-700 backdrop-blur-md
@@ -185,7 +186,6 @@ export default function Navbar() {
           </span>
         </button>
 
-        {/* Dark / Light */}
         <button onClick={toggleTheme} aria-label="Toggle theme"
           className="w-11 h-11 flex items-center justify-center rounded-full
                      bg-[#0f0f0f]/80 border border-neutral-700 backdrop-blur-md
