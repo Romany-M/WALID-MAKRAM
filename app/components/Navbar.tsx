@@ -6,6 +6,15 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang, t } from "./LanguageContext";
 
+/* ── map category slug → nameKey ── */
+const categoryToNameKey: Record<string, string> = {
+  ancient: "gallery",
+  coptic:  "gallery",
+  oil:     "gallery",
+  various: "various_art",
+  murals:  "murals_domes",
+};
+
 export default function Navbar() {
   const pathname = usePathname();
   const [active,   setActive]   = useState<string>("");
@@ -26,6 +35,17 @@ export default function Navbar() {
   ];
 
   useEffect(() => { document.documentElement.classList.add("dark"); }, []);
+
+  /* ── Active من الـ URL لو في subpage ── */
+  useEffect(() => {
+    if (isHome) return;
+    const parts = pathname?.split("/") ?? [];
+    // /gallery/[category]
+    if (parts[1] === "gallery" && parts[2]) {
+      const key = categoryToNameKey[parts[2]];
+      if (key) setActive(key);
+    }
+  }, [pathname, isHome]);
 
   /* ── Scroll Spy (home only) ── */
   useEffect(() => {
@@ -64,7 +84,6 @@ export default function Navbar() {
     setIsDark(!isDark);
   };
 
-  /* ✅ لو في subpage → احفظ القسم في sessionStorage وروح لـ / */
   const handleNavClick = (id: string, nameKey: string) => {
     setActive(nameKey);
     setMenuOpen(false);
@@ -102,7 +121,6 @@ export default function Navbar() {
           dir={lang === "AR" ? "rtl" : "ltr"}>
           {links.map(link => (
             <div key={link.nameKey} className="relative">
-              {/* ✅ لو home → anchor link، لو subpage → روح لـ / */}
               <Link
                 href={isHome ? link.href : "/"}
                 onClick={() => handleNavClick(link.id, link.nameKey)}
@@ -113,8 +131,12 @@ export default function Navbar() {
                     : "text-neutral-700 dark:text-neutral-300 hover:text-amber-500 dark:hover:text-amber-400"}`}>
                 {t[link.nameKey][lang]}
               </Link>
+              {/* ── underline + dot للـ active في subpage ── */}
               <span className={`absolute left-0 -bottom-2 h-[1px] bg-[#b8955a] transition-all duration-400
                 ${active === link.nameKey ? "w-full" : "w-0"}`}/>
+              {!isHome && active === link.nameKey && (
+                <span className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#b8955a]" />
+              )}
             </div>
           ))}
         </nav>

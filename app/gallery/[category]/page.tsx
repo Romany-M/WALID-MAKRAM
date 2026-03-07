@@ -35,6 +35,8 @@ function getField(item: Item, enVal: string, arKey: string, isAR: boolean): stri
   return rec[arKey] || enVal;
 }
 
+const PAGE_SIZE = 8;
+
 export default function GalleryDetailPage() {
   const params   = useParams();
   const router   = useRouter();
@@ -46,10 +48,13 @@ export default function GalleryDetailPage() {
   const meta      = categoryMeta[category] ?? { labelEN: category, labelAR: category };
   const metaLabel = isAR ? meta.labelAR : meta.labelEN;
 
-  const [items, setItems] = useState<Item[]>([]);
-  const [lb,    setLb]    = useState<number | null>(null);
+  const [items,    setItems]   = useState<Item[]>([]);
+  const [lb,       setLb]      = useState<number | null>(null);
+  const [page,     setPage]    = useState(0);
 
-  /* ✅ Load from Supabase async */
+  const totalPages = Math.ceil(items.length / PAGE_SIZE);
+  const pageItems  = items.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+
   useEffect(() => {
     const load = async () => {
       const cfg = await loadConfig();
@@ -98,116 +103,85 @@ export default function GalleryDetailPage() {
     router.push("/");
   };
 
+  const goToPage = (idx: number) => {
+    setPage(idx);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className={`min-h-screen ${isDark ? "bg-black text-white" : "bg-neutral-50 text-neutral-900"}`}>
 
+      {/* ══ LIGHTBOX ══ */}
       <AnimatePresence>
         {lb !== null && currentItem && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className={`fixed inset-0 z-[300] backdrop-blur-sm flex flex-col
-              ${isDark ? "bg-black/97" : "bg-white/97"}`}
+            className={`fixed inset-0 z-[300] backdrop-blur-sm flex flex-col ${isDark ? "bg-black/97" : "bg-white/97"}`}
             onClick={() => setLb(null)}
             dir={isAR ? "rtl" : "ltr"}
           >
-            <div className={`flex justify-between items-center px-8 py-5 border-b flex-shrink-0
-              ${isDark ? "border-white/10" : "border-neutral-200"}`}>
+            <div className={`flex justify-between items-center px-8 py-5 border-b flex-shrink-0 ${isDark ? "border-white/10" : "border-neutral-200"}`}>
               <span className={`text-xs tracking-[0.5em] font-light ${isDark ? "text-white/40" : "text-neutral-400"}`}>
                 {String(lb + 1).padStart(2, "0")} — {String(items.length).padStart(2, "0")}
               </span>
               <button onClick={() => setLb(null)}
-                className={`flex items-center gap-3 text-sm tracking-[0.4em] uppercase transition group
-                  ${isDark ? "text-white/60 hover:text-white" : "text-neutral-500 hover:text-neutral-900"}`}>
+                className={`flex items-center gap-3 text-sm tracking-[0.4em] uppercase transition group ${isDark ? "text-white/60 hover:text-white" : "text-neutral-500 hover:text-neutral-900"}`}>
                 {isAR ? "إغلاق" : "Close"}
-                <span className={`w-9 h-9 rounded-full border flex items-center justify-center text-lg text-[#b8955a] transition group-hover:border-[#b8955a]
-                  ${isDark ? "border-white/20" : "border-neutral-300"}`}>✕</span>
+                <span className={`w-9 h-9 rounded-full border flex items-center justify-center text-lg text-[#b8955a] transition group-hover:border-[#b8955a] ${isDark ? "border-white/20" : "border-neutral-300"}`}>✕</span>
               </button>
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden"
-              onClick={e => e.stopPropagation()}>
+            <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden" onClick={e => e.stopPropagation()}>
               <div className="flex-1 flex items-center justify-center relative p-8 md:p-16">
-                <button
-                  className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition
-                    ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
+                <button className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
                   onClick={() => setLb((lb - 1 + items.length) % items.length)}>‹</button>
-
-                <motion.div key={lb} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }} className="relative">
-                  <img src={currentItem.src}
-                    alt={getField(currentItem, currentItem.title, "titleAR", isAR)}
+                <motion.div key={lb} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="relative">
+                  <img src={currentItem.src} alt={getField(currentItem, currentItem.title, "titleAR", isAR)}
                     className="max-h-[68vh] max-w-full object-contain object-top"
                     style={{ filter: "drop-shadow(0 0 80px rgba(184,149,90,0.18))" }} />
                   <div className="absolute -inset-4 border border-[#b8955a]/15 pointer-events-none" />
                 </motion.div>
-
-                <button
-                  className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition
-                    ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
+                <button className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
                   onClick={() => setLb((lb + 1) % items.length)}>›</button>
               </div>
 
               <motion.div key={`i-${lb}`}
-                initial={{ opacity: 0, x: isAR ? -24 : 24 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className={`w-full md:w-[500px] shrink-0 flex flex-col justify-center px-12 py-14 border-t md:border-t-0 md:border-l
-                  ${isDark ? "border-white/10 bg-transparent" : "border-neutral-200 bg-white"}`}>
-
+                initial={{ opacity: 0, x: isAR ? -24 : 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
+                className={`w-full md:w-[500px] shrink-0 flex flex-col justify-center px-12 py-14 border-t md:border-t-0 md:border-l ${isDark ? "border-white/10 bg-transparent" : "border-neutral-200 bg-white"}`}>
                 <p className="text-[#b8955a] text-[10px] tracking-[0.65em] uppercase mb-6">— {currentItem.year} —</p>
-                <h3 className={`font-extralight leading-relaxed mb-10 text-3xl tracking-[0.15em]
-                  ${isDark ? "text-white" : "text-neutral-900"}`}>
+                <h3 className={`font-extralight leading-relaxed mb-10 text-3xl tracking-[0.15em] ${isDark ? "text-white" : "text-neutral-900"}`}>
                   {getField(currentItem, currentItem.title, "titleAR", isAR)}
                 </h3>
-
                 <div className={`space-y-6 border-t pt-8 ${isDark ? "border-white/10" : "border-neutral-200"}`}>
                   <div>
-                    <p className={`text-[9px] tracking-[0.55em] uppercase mb-2 ${isDark ? "text-white/25" : "text-neutral-400"}`}>
-                      {isAR ? "الأسلوب" : "Medium"}
-                    </p>
-                    <p className={`text-sm italic font-light ${isDark ? "text-neutral-300" : "text-neutral-600"}`}>
-                      {getField(currentItem, currentItem.medium, "mediumAR", isAR)}
-                    </p>
+                    <p className={`text-[9px] tracking-[0.55em] uppercase mb-2 ${isDark ? "text-white/25" : "text-neutral-400"}`}>{isAR ? "الأسلوب" : "Medium"}</p>
+                    <p className={`text-sm italic font-light ${isDark ? "text-neutral-300" : "text-neutral-600"}`}>{getField(currentItem, currentItem.medium, "mediumAR", isAR)}</p>
                   </div>
                   {"dims" in currentItem && (
                     <div>
-                      <p className={`text-[9px] tracking-[0.55em] uppercase mb-2 ${isDark ? "text-white/25" : "text-neutral-400"}`}>
-                        {isAR ? "الأبعاد" : "Dimensions"}
-                      </p>
-                      <p className={`text-sm tracking-widest ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>
-                        {(currentItem as ArtItem).dims}
-                      </p>
+                      <p className={`text-[9px] tracking-[0.55em] uppercase mb-2 ${isDark ? "text-white/25" : "text-neutral-400"}`}>{isAR ? "الأبعاد" : "Dimensions"}</p>
+                      <p className={`text-sm tracking-widest ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>{(currentItem as ArtItem).dims}</p>
                     </div>
                   )}
                   {"size" in currentItem && (
                     <div>
-                      <p className={`text-[9px] tracking-[0.55em] uppercase mb-2 ${isDark ? "text-white/25" : "text-neutral-400"}`}>
-                        {isAR ? "المساحة" : "Scale"}
-                      </p>
-                      <p className={`text-sm tracking-widest ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>
-                        {(currentItem as MuralItem).size}
-                      </p>
+                      <p className={`text-[9px] tracking-[0.55em] uppercase mb-2 ${isDark ? "text-white/25" : "text-neutral-400"}`}>{isAR ? "المساحة" : "Scale"}</p>
+                      <p className={`text-sm tracking-widest ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>{(currentItem as MuralItem).size}</p>
                     </div>
                   )}
                   <div>
-                    <p className={`text-[9px] tracking-[0.55em] uppercase mb-2 ${isDark ? "text-white/25" : "text-neutral-400"}`}>
-                      {isAR ? "الموقع" : "Location"}
-                    </p>
-                    <p className={`text-sm tracking-wider leading-relaxed ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>
-                      {getField(currentItem, currentItem.location, "locationAR", isAR)}
-                    </p>
+                    <p className={`text-[9px] tracking-[0.55em] uppercase mb-2 ${isDark ? "text-white/25" : "text-neutral-400"}`}>{isAR ? "الموقع" : "Location"}</p>
+                    <p className={`text-sm tracking-wider leading-relaxed ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>{getField(currentItem, currentItem.location, "locationAR", isAR)}</p>
                   </div>
                 </div>
-
                 <div className="flex gap-3 mt-12">
                   <button onClick={() => setLb((lb - 1 + items.length) % items.length)}
-                    className={`flex-1 border py-4 text-sm tracking-[0.3em] uppercase transition hover:border-[#b8955a]
-                      ${isDark ? "border-white/15 text-white/40 hover:text-white" : "border-neutral-200 text-neutral-400 hover:text-neutral-900"}`}>
+                    className={`flex-1 border py-4 text-sm tracking-[0.3em] uppercase transition hover:border-[#b8955a] ${isDark ? "border-white/15 text-white/40 hover:text-white" : "border-neutral-200 text-neutral-400 hover:text-neutral-900"}`}>
                     {isAR ? "← السابق" : "← Prev"}
                   </button>
                   <button onClick={() => setLb((lb + 1) % items.length)}
-                    className={`flex-1 border py-4 text-sm tracking-[0.3em] uppercase transition hover:border-[#b8955a]
-                      ${isDark ? "border-white/15 text-white/40 hover:text-white" : "border-neutral-200 text-neutral-400 hover:text-neutral-900"}`}>
+                    className={`flex-1 border py-4 text-sm tracking-[0.3em] uppercase transition hover:border-[#b8955a] ${isDark ? "border-white/15 text-white/40 hover:text-white" : "border-neutral-200 text-neutral-400 hover:text-neutral-900"}`}>
                     {isAR ? "التالي →" : "Next →"}
                   </button>
                 </div>
@@ -217,6 +191,7 @@ export default function GalleryDetailPage() {
         )}
       </AnimatePresence>
 
+      {/* ══ GRID ══ */}
       <div className="pt-32 pb-24 px-10 md:px-28">
         <div className="flex items-center justify-between mb-16">
           <button onClick={handleBack}
@@ -231,17 +206,21 @@ export default function GalleryDetailPage() {
           <span className="text-neutral-500 text-sm">{items.length} {isAR ? "عمل" : "works"}</span>
         </div>
 
+        {/* ── 8 صور في الصفحة ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-start">
-          {items.map((item, i) => (
-            <motion.div key={i}
+          {pageItems.map((item, i) => (
+            <motion.div key={`${page}-${i}`}
               initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: i * 0.06 }}
-              className="group cursor-pointer" onClick={() => setLb(i)}>
+              className="group cursor-pointer"
+              onClick={() => setLb(page * PAGE_SIZE + i)}>
+
               <div className="overflow-hidden bg-neutral-100 dark:bg-neutral-900 relative aspect-[4/5]">
                 <img src={item.src}
                   alt={getField(item, item.title, "titleAR", isAR)}
                   className="absolute inset-0 w-full h-full object-cover object-top group-hover:scale-105 transition-all duration-1000" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#b8955a]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                {/* ── أيقونة التكبير ── */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                   <div className="w-11 h-11 rounded-full border border-white/60 flex items-center justify-center backdrop-blur-sm bg-black/20">
                     <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-white fill-none" strokeWidth="1.6">
@@ -249,8 +228,9 @@ export default function GalleryDetailPage() {
                     </svg>
                   </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform duration-500">
-                  <p className="text-white text-[10px] tracking-[0.35em] uppercase font-medium">
+                {/* ── hover: الاسم فوق الصورة فقط ── */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform duration-500" dir={isAR ? "rtl" : "ltr"}>
+                  <p className={`text-white font-medium ${isAR ? "ar-card-text text-sm" : "text-[10px] tracking-[0.35em] uppercase"}`}>
                     {getField(item, item.title, "titleAR", isAR)}
                   </p>
                   <p className="text-[#f0cc8a] text-[9px] mt-1">
@@ -258,13 +238,11 @@ export default function GalleryDetailPage() {
                   </p>
                 </div>
               </div>
-              <div className={`mt-4 pb-3 border-b flex justify-between items-baseline gap-3
-                ${isDark ? "border-neutral-800" : "border-neutral-200"}`}>
+
+              {/* ── تحت الصورة: بدون الاسم ── */}
+              <div className={`mt-4 pb-3 border-b flex justify-between items-baseline gap-3 ${isDark ? "border-neutral-800" : "border-neutral-200"}`}>
                 <div>
-                  <h4 className="text-[10px] tracking-[0.25em] uppercase font-medium leading-relaxed">
-                    {getField(item, item.title, "titleAR", isAR)}
-                  </h4>
-                  <p className="text-[9px] text-neutral-500 italic mt-1">
+                  <p className="text-[9px] text-neutral-500 italic">
                     {getField(item, item.medium, "mediumAR", isAR)}
                   </p>
                 </div>
@@ -274,9 +252,37 @@ export default function GalleryDetailPage() {
                   <span className="text-[9px] tracking-widest text-neutral-400 block">{item.year}</span>
                 </div>
               </div>
+              <p className={`mt-2 truncate ${isAR ? "ar-card-text text-xs text-neutral-500 dark:text-neutral-400" : "text-[9px] tracking-wider text-neutral-400 dark:text-neutral-500 uppercase"}`}>
+                {getField(item, item.location, "locationAR", isAR)}
+              </p>
             </motion.div>
           ))}
         </div>
+
+        {/* ── Pagination ── */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-16">
+            <button onClick={() => goToPage(page - 1)} disabled={page === 0}
+              className={`px-5 py-2.5 border text-xs tracking-[0.3em] uppercase transition-all duration-300 disabled:opacity-30
+                ${isDark ? "border-neutral-700 text-neutral-400 hover:border-[#b8955a] hover:text-white" : "border-neutral-300 text-neutral-500 hover:border-[#b8955a] hover:text-neutral-900"}`}>
+              {isAR ? "التالي ←" : "← Prev"}
+            </button>
+            {Array.from({ length: totalPages }, (_, idx) => (
+              <button key={idx} onClick={() => goToPage(idx)}
+                className={`w-9 h-9 text-xs tracking-widest border transition-all duration-300
+                  ${page === idx
+                    ? "bg-[#b8955a] border-[#b8955a] text-white"
+                    : isDark ? "border-neutral-700 text-neutral-400 hover:border-[#b8955a] hover:text-white" : "border-neutral-300 text-neutral-500 hover:border-[#b8955a] hover:text-neutral-900"}`}>
+                {idx + 1}
+              </button>
+            ))}
+            <button onClick={() => goToPage(page + 1)} disabled={page === totalPages - 1}
+              className={`px-5 py-2.5 border text-xs tracking-[0.3em] uppercase transition-all duration-300 disabled:opacity-30
+                ${isDark ? "border-neutral-700 text-neutral-400 hover:border-[#b8955a] hover:text-white" : "border-neutral-300 text-neutral-500 hover:border-[#b8955a] hover:text-neutral-900"}`}>
+              {isAR ? "→ السابق" : "Next →"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

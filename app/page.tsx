@@ -128,36 +128,53 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
   );
 }
 
-/* ══ ART CARD — ✅ بدون hover effects ══ */
+/* ══ ART CARD — كارت احترافي مع fade-in على الصورة، بدون hover ══ */
 function ArtCard({ src, title, titleAR, medium, mediumAR, dims, year, location, locationAR, delay=0, onClick }: ArtItem & { delay?:number; onClick?:()=>void }) {
   const { lang } = useLang();
   const isAR = lang === "AR";
   return (
-    <motion.div initial={{ opacity:0, y:50 }} whileInView={{ opacity:1, y:0 }}
-      viewport={{ once:true, margin:"-80px" }} transition={{ duration:1, delay, ease:"easeOut" }}
-      className="cursor-pointer" onClick={onClick}>
-
-      {/* ✅ الصورة بدون hover overlay أو scale */}
-      <div className="overflow-hidden bg-neutral-100 dark:bg-neutral-900 relative aspect-[4/5]">
-        <img src={src} alt={isAR?titleAR:title}
-          className="absolute inset-0 w-full h-full object-cover object-top" />
+    <motion.div
+      initial={{ opacity:0, y:50 }}
+      whileInView={{ opacity:1, y:0 }}
+      viewport={{ once:true, margin:"-80px" }}
+      transition={{ duration:1, delay, ease:"easeOut" }}
+      className="cursor-pointer bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+      onClick={onClick}
+    >
+      {/* ── صورة مع fade-in عند الدخول للـ viewport ── */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+        <motion.img
+          src={src}
+          alt={isAR ? titleAR : title}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: delay + 0.15, ease: "easeOut" }}
+          className="absolute inset-0 w-full h-full object-cover object-top"
+        />
       </div>
 
-      {/* ✅ نص أوضح وأكبر */}
-      <div className="mt-2 md:mt-3 pb-3 border-b border-neutral-200 dark:border-neutral-800 flex justify-between items-start gap-2"
-           dir={isAR?"rtl":"ltr"}>
-        <div className="min-w-0 overflow-hidden">
-          <h4 className={`font-semibold leading-snug truncate ${isAR ? "ar-card-text" : "text-[12px] md:text-[13px] tracking-[0.08em] uppercase text-neutral-900 dark:text-white"}`}>
-            {isAR ? titleAR : title}
-          </h4>
-          <p className={`mt-0.5 truncate ${isAR ? "ar-card-text" : "text-[11px] md:text-[12px] text-neutral-500 dark:text-neutral-400 tracking-wide"}`}>
-            {isAR ? mediumAR : medium}
+      {/* ── بيانات الكارت — دايماً ظاهرة ── */}
+      <div className="p-3 md:p-4" dir={isAR ? "rtl" : "ltr"}>
+        <div className="flex justify-between items-start gap-2">
+          <div className="min-w-0 overflow-hidden">
+            <h4 className={`font-semibold leading-snug truncate ${isAR ? "ar-card-text text-sm" : "text-[12px] md:text-[13px] tracking-[0.06em] uppercase text-neutral-900 dark:text-white"}`}>
+              {isAR ? titleAR : title}
+            </h4>
+            <p className={`mt-1 truncate ${isAR ? "ar-card-text text-xs text-neutral-500 dark:text-neutral-400" : "text-[11px] text-neutral-500 dark:text-neutral-400 tracking-wide italic"}`}>
+              {isAR ? mediumAR : medium}
+            </p>
+          </div>
+          <div className={`flex-shrink-0 text-${isAR ? "left" : "right"}`}>
+            <span className="text-[10px] md:text-[11px] tracking-widest text-[#b8955a] block">{year}</span>
+            {dims && <span className="text-[10px] md:text-[11px] tracking-widest text-neutral-400 dark:text-neutral-500 block">{dims}</span>}
+          </div>
+        </div>
+        {location && (
+          <p className={`mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-800 truncate ${isAR ? "ar-card-text text-xs text-neutral-500 dark:text-neutral-400" : "text-[10px] tracking-wider text-neutral-400 dark:text-neutral-500 uppercase"}`}>
+            {isAR ? locationAR : location}
           </p>
-        </div>
-        <div className={`flex-shrink-0 ${isAR?"text-left":"text-right"}`}>
-          <span className="text-[10px] md:text-[11px] tracking-widest text-neutral-400 block">{dims}</span>
-          <span className="text-[10px] md:text-[11px] tracking-widest text-neutral-400 block">{year}</span>
-        </div>
+        )}
       </div>
     </motion.div>
   );
@@ -207,7 +224,6 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
       <section id="gallery" className="px-4 sm:px-8 md:px-28 py-12 md:py-24">
         <SectionHeader label={t.selected_works[lang]} title={t.gallery_title[lang]} />
 
-        {/* ✅ tabs — tracking صغير على كل الشاشات عشان Oil Paintings ميطلعش برا */}
         <div className="flex items-center justify-center mb-8 md:mb-14 px-2" dir={isAR?"rtl":"ltr"}>
           <div className="flex border border-neutral-200 dark:border-neutral-800 w-full max-w-md md:w-auto">
             {galleryTabs.map(tab=>(
@@ -230,7 +246,7 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
 
         <motion.div key={active} initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ duration:0.6 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 items-start">
-          {items.map((item,i)=><ArtCard key={i} {...item} delay={i*0.07} onClick={()=>setLb(i)}/>)}
+          {items.slice(0, 8).map((item,i)=><ArtCard key={i} {...item} delay={i*0.07} onClick={()=>setLb(i)}/>)}
         </motion.div>
 
         <div className="text-center mt-8 md:mt-14">
@@ -381,7 +397,7 @@ export default function Home() {
         {/* ── GALLERY ── */}
         <GallerySection data={cfg.galleryData}/>
 
-        {/* ── MURALS ── ✅ py أقل */}
+        {/* ── MURALS ── */}
         <section id="murals" className="bg-neutral-100 dark:bg-[#0a0a0a] py-12 md:py-20 overflow-hidden">
           <div className="text-center mb-10 md:mb-16 select-none px-4 md:px-6">
             <motion.h2 initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }} transition={{ duration:1 }} viewport={{ once:true }} className="relative inline-block">
@@ -406,7 +422,7 @@ export default function Home() {
                     <div className="absolute inset-0 border border-[#b8955a]/60" />
                     <div className="absolute inset-[6px] md:inset-[10px] border border-[#b8955a]/35" />
                     <div className="absolute top-[4px] left-[4px] w-4 md:w-6 h-4 md:h-6 border-t-2 border-l-2 border-[#b8955a]" />
-                    <div className="absolute top-[4px] right-[4px] w-4 md:w-6 h-4 md:h-6 border-t-2 border-r-2 border-[#b8955a]" />
+                    <div className="absolute top-[4px] right-[4px] w-4 md:w-6 h-4 md:w-6 border-t-2 border-r-2 border-[#b8955a]" />
                     <div className="absolute bottom-[4px] left-[4px] w-4 md:w-6 h-4 md:h-6 border-b-2 border-l-2 border-[#b8955a]" />
                     <div className="absolute bottom-[4px] right-[4px] w-4 md:w-6 h-4 md:h-6 border-b-2 border-r-2 border-[#b8955a]" />
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
@@ -438,12 +454,12 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── VARIOUS ── ✅ pt أقل عشان المسافة بين Murals و Various تتقل */}
+        {/* ── VARIOUS ── */}
         <section id="various" className="px-4 sm:px-8 md:px-28 pt-8 pb-12 md:pt-12 md:pb-20 bg-neutral-100 dark:bg-neutral-950">
           <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#b8955a]/40 to-transparent mb-8 md:mb-12"/>
           <SectionHeader label="" title={t.various_title[lang]}/>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 items-start">
-            {cfg.variousWorks.map((item,i)=><ArtCard key={i} {...item} delay={i*0.07} onClick={()=>setVariousLb(i)}/>)}
+            {cfg.variousWorks.slice(0, 8).map((item,i)=><ArtCard key={i} {...item} delay={i*0.07} onClick={()=>setVariousLb(i)}/>)}
           </div>
           <div className="text-center mt-8 md:mt-14">
             <Link href="/gallery/various" onClick={() => sessionStorage.setItem("scrollToSection", "various")}
