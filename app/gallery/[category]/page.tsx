@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { loadConfig, ArtItem, MuralItem } from "../../lib/galleryData";
 import { useLang } from "../../components/LanguageContext";
+import WatermarkedImage from "../../components/WatermarkedImage";
+import { useAntiDevTools } from "../../hooks/useAntiDevTools";
 
 type Item = ArtItem | MuralItem;
 
@@ -38,6 +40,9 @@ function getField(item: Item, enVal: string, arKey: string, isAR: boolean): stri
 const PAGE_SIZE = 8;
 
 export default function GalleryDetailPage() {
+  // ✅ useAntiDevTools هنا جوه الـ component
+  useAntiDevTools();
+
   const params   = useParams();
   const router   = useRouter();
   const category = getCategoryStr(params.category);
@@ -48,9 +53,9 @@ export default function GalleryDetailPage() {
   const meta      = categoryMeta[category] ?? { labelEN: category, labelAR: category };
   const metaLabel = isAR ? meta.labelAR : meta.labelEN;
 
-  const [items,    setItems]   = useState<Item[]>([]);
-  const [lb,       setLb]      = useState<number | null>(null);
-  const [page,     setPage]    = useState(0);
+  const [items,  setItems] = useState<Item[]>([]);
+  const [lb,     setLb]    = useState<number | null>(null);
+  const [page,   setPage]  = useState(0);
 
   const totalPages = Math.ceil(items.length / PAGE_SIZE);
   const pageItems  = items.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
@@ -134,16 +139,26 @@ export default function GalleryDetailPage() {
 
             <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden" onClick={e => e.stopPropagation()}>
               <div className="flex-1 flex items-center justify-center relative p-8 md:p-16">
-                <button className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
-                  onClick={() => setLb((lb - 1 + items.length) % items.length)}>‹</button>
-                <motion.div key={lb} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="relative">
-                  <img src={currentItem.src} alt={getField(currentItem, currentItem.title, "titleAR", isAR)}
-                    className="max-h-[68vh] max-w-full object-contain object-top"
-                    style={{ filter: "drop-shadow(0 0 80px rgba(184,149,90,0.18))" }} />
+                <button
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
+                  onClick={() => setLb((lb - 1 + items.length) % items.length)}>‹
+                </button>
+
+                <motion.div key={lb} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
+                  className="relative inline-flex">
+                  <WatermarkedImage
+                    src={currentItem.src}
+                    alt={getField(currentItem, currentItem.title, "titleAR", isAR)}
+                    objectPosition="top"
+                    naturalSize
+                  />
                   <div className="absolute -inset-4 border border-[#b8955a]/15 pointer-events-none" />
                 </motion.div>
-                <button className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
-                  onClick={() => setLb((lb + 1) % items.length)}>›</button>
+
+                <button
+                  className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
+                  onClick={() => setLb((lb + 1) % items.length)}>›
+                </button>
               </div>
 
               <motion.div key={`i-${lb}`}
@@ -206,7 +221,7 @@ export default function GalleryDetailPage() {
           <span className="text-neutral-500 text-sm">{items.length} {isAR ? "عمل" : "works"}</span>
         </div>
 
-        {/* ── 8 صور في الصفحة ── */}
+        {/* ── Grid 8 صور في الصفحة ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-start">
           {pageItems.map((item, i) => (
             <motion.div key={`${page}-${i}`}
@@ -215,21 +230,25 @@ export default function GalleryDetailPage() {
               className="group cursor-pointer"
               onClick={() => setLb(page * PAGE_SIZE + i)}>
 
+              {/* ── صورة بـ WatermarkedImage ── */}
               <div className="overflow-hidden bg-neutral-100 dark:bg-neutral-900 relative aspect-[4/5]">
-                <img src={item.src}
+                <WatermarkedImage
+                  src={item.src}
                   alt={getField(item, item.title, "titleAR", isAR)}
-                  className="absolute inset-0 w-full h-full object-cover object-top group-hover:scale-105 transition-all duration-1000" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#b8955a]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                {/* ── أيقونة التكبير ── */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                  className="absolute inset-0 w-full h-full"
+                  objectPosition="top"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#b8955a]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                {/* أيقونة التكبير */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition pointer-events-none">
                   <div className="w-11 h-11 rounded-full border border-white/60 flex items-center justify-center backdrop-blur-sm bg-black/20">
                     <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-white fill-none" strokeWidth="1.6">
                       <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
                     </svg>
                   </div>
                 </div>
-                {/* ── hover: الاسم فوق الصورة فقط ── */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform duration-500" dir={isAR ? "rtl" : "ltr"}>
+                {/* hover: الاسم فوق الصورة */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform duration-500 pointer-events-none" dir={isAR ? "rtl" : "ltr"}>
                   <p className={`text-white font-medium ${isAR ? "ar-card-text text-sm" : "text-[10px] tracking-[0.35em] uppercase"}`}>
                     {getField(item, item.title, "titleAR", isAR)}
                   </p>
@@ -239,13 +258,11 @@ export default function GalleryDetailPage() {
                 </div>
               </div>
 
-              {/* ── تحت الصورة: بدون الاسم ── */}
+              {/* بيانات تحت الصورة */}
               <div className={`mt-4 pb-3 border-b flex justify-between items-baseline gap-3 ${isDark ? "border-neutral-800" : "border-neutral-200"}`}>
-                <div>
-                  <p className="text-[9px] text-neutral-500 italic">
-                    {getField(item, item.medium, "mediumAR", isAR)}
-                  </p>
-                </div>
+                <p className="text-[9px] text-neutral-500 italic">
+                  {getField(item, item.medium, "mediumAR", isAR)}
+                </p>
                 <div className="text-right flex-shrink-0">
                   {"dims" in item && <span className="text-[9px] tracking-widest text-neutral-400 block">{(item as ArtItem).dims}</span>}
                   {"size" in item && <span className="text-[9px] tracking-widest text-neutral-400 block">{(item as MuralItem).size}</span>}

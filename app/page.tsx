@@ -8,6 +8,8 @@ import {
   ArtItem, MuralItem, GalleryConfig,
   defaultConfig, loadConfig,
 } from "./lib/galleryData";
+import WatermarkedImage from "./components/WatermarkedImage";
+import { useAntiDevTools } from "./hooks/useAntiDevTools";
 
 let _preloaderShown = false;
 
@@ -85,10 +87,13 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
         <div className="flex-1 flex items-center justify-center relative p-4 md:p-16 overflow-hidden min-h-0">
           <button className={`absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 md:w-12 h-16 md:h-20 flex items-center justify-center text-4xl md:text-5xl transition z-10 ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
             onClick={() => onNav((index-1+total)%total)}>‹</button>
-          <motion.div key={index} initial={{ opacity:0, scale:0.97 }} animate={{ opacity:1, scale:1 }} transition={{ duration:0.5, ease:"easeOut" }} className="relative">
-            <img src={item.src} alt={getF(item.title,"titleAR")}
-              className="max-h-[45vh] md:max-h-[68vh] max-w-full object-contain object-top"
-              style={{ filter:"drop-shadow(0 0 80px rgba(184,149,90,0.18))" }} />
+          <motion.div key={index} initial={{ opacity:0, scale:0.97 }} animate={{ opacity:1, scale:1 }} transition={{ duration:0.5, ease:"easeOut" }} className="relative inline-flex">
+            <WatermarkedImage
+              src={item.src}
+              alt={getF(item.title,"titleAR")}
+              objectPosition="top"
+              naturalSize
+            />
             <div className="absolute -inset-4 border border-[#b8955a]/15 pointer-events-none hidden md:block" />
           </motion.div>
           <button className={`absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 md:w-12 h-16 md:h-20 flex items-center justify-center text-4xl md:text-5xl transition z-10 ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
@@ -128,7 +133,7 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
   );
 }
 
-/* ══ ART CARD — كارت احترافي مع fade-in على الصورة، بدون hover ══ */
+/* ══ ART CARD ══ */
 function ArtCard({ src, title, titleAR, medium, mediumAR, dims, year, location, locationAR, delay=0, onClick }: ArtItem & { delay?:number; onClick?:()=>void }) {
   const { lang } = useLang();
   const isAR = lang === "AR";
@@ -141,20 +146,14 @@ function ArtCard({ src, title, titleAR, medium, mediumAR, dims, year, location, 
       className="cursor-pointer bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden"
       onClick={onClick}
     >
-      {/* ── صورة مع fade-in عند الدخول للـ viewport ── */}
       <div className="relative aspect-[4/5] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
-        <motion.img
+        <WatermarkedImage
           src={src}
           alt={isAR ? titleAR : title}
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, delay: delay + 0.15, ease: "easeOut" }}
-          className="absolute inset-0 w-full h-full object-cover object-top"
+          className="absolute inset-0 w-full h-full"
+          objectPosition="top"
         />
       </div>
-
-      {/* ── بيانات الكارت — دايماً ظاهرة ── */}
       <div className="p-3 md:p-4" dir={isAR ? "rtl" : "ltr"}>
         <div className="flex justify-between items-start gap-2">
           <div className="min-w-0 overflow-hidden">
@@ -223,7 +222,6 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
       </AnimatePresence>
       <section id="gallery" className="px-4 sm:px-8 md:px-28 py-12 md:py-24">
         <SectionHeader label={t.selected_works[lang]} title={t.gallery_title[lang]} />
-
         <div className="flex items-center justify-center mb-8 md:mb-14 px-2" dir={isAR?"rtl":"ltr"}>
           <div className="flex border border-neutral-200 dark:border-neutral-800 w-full max-w-md md:w-auto">
             {galleryTabs.map(tab=>(
@@ -232,8 +230,7 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
                 className={`relative flex-1 md:flex-none px-3 md:px-8 py-2.5 md:py-3
                   text-[8px] md:text-[10px] tracking-[0.08em] md:tracking-[0.2em]
                   uppercase transition-all duration-500 overflow-hidden whitespace-nowrap
-                  border-r border-neutral-200 dark:border-neutral-800 last:border-r-0
-                  font-medium
+                  border-r border-neutral-200 dark:border-neutral-800 last:border-r-0 font-medium
                   ${active===tab.key
                     ? "bg-neutral-900 dark:bg-white text-white dark:text-black"
                     : "text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"}`}>
@@ -243,12 +240,10 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
             ))}
           </div>
         </div>
-
         <motion.div key={active} initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ duration:0.6 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 items-start">
           {items.slice(0, 8).map((item,i)=><ArtCard key={i} {...item} delay={i*0.07} onClick={()=>setLb(i)}/>)}
         </motion.div>
-
         <div className="text-center mt-8 md:mt-14">
           <Link href={`/gallery/${active}`}
             onClick={() => { sessionStorage.setItem("galleryActiveTab", active); sessionStorage.setItem("scrollToSection", "gallery"); }}
@@ -328,6 +323,9 @@ function ContactForm() {
    PAGE
 ════════════════════════════════ */
 export default function Home() {
+  // ✅ useAntiDevTools هنا جوه الـ component
+  useAntiDevTools();
+
   const { lang } = useLang();
   const isAR = lang === "AR";
   const [muralLb,   setMuralLb]   = useState<number|null>(null);
@@ -429,7 +427,15 @@ export default function Home() {
                       style={{ boxShadow:"inset 0 0 30px rgba(184,149,90,0.15), 0 0 25px rgba(184,149,90,0.2)" }} />
                   </div>
                   <div className="overflow-hidden">
-                    <img src={m.src} className="w-full h-[50vw] sm:h-[300px] md:h-[460px] object-cover object-top brightness-50 group-hover:brightness-90 group-hover:scale-105 transition-all duration-700 ease-out"/>
+                    {/* murals تستخدم WatermarkedImage كمان */}
+                    <div className="relative w-full h-[50vw] sm:h-[300px] md:h-[460px]">
+                      <WatermarkedImage
+                        src={m.src}
+                        alt={isAR ? m.titleAR : m.title}
+                        className="absolute inset-0 w-full h-full brightness-50 group-hover:brightness-90 group-hover:scale-105 transition-all duration-700 ease-out"
+                        objectPosition="top"
+                      />
+                    </div>
                     <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-8 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-gradient-to-t from-black/90 via-black/30 to-transparent" dir={isAR?"rtl":"ltr"}>
                       <p className="text-white text-[10px] md:text-[11px] tracking-[0.35em] uppercase font-medium drop-shadow mb-1">{isAR?m.titleAR:m.title}</p>
                       <p className="text-[#f0cc8a] text-[8px] md:text-[9px] tracking-[0.3em] uppercase mb-3 md:mb-4 drop-shadow">{isAR?m.locationAR:m.location}</p>
