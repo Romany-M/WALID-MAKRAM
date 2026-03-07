@@ -151,6 +151,7 @@ export default function GalleryDetailPage() {
                     alt={getField(currentItem, currentItem.title, "titleAR", isAR)}
                     objectPosition="top"
                     naturalSize
+                    className="max-h-[42vh] md:max-h-[68vh] max-w-[90vw] md:max-w-[80vw] w-auto h-auto"
                   />
                   <div className="absolute -inset-4 border border-[#b8955a]/15 pointer-events-none" />
                 </motion.div>

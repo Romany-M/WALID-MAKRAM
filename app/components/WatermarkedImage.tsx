@@ -166,10 +166,8 @@ export default function WatermarkedImage({
       style={
         naturalSize
           ? {
-              // ── lightbox: حجم طبيعي مقيّد بالـ viewport ──
+              // ── lightbox: الـ sizing بيجي من className (Tailwind) ──
               display   : "block",
-              maxHeight : "68vh",
-              maxWidth  : "80vw",
               width     : "auto",
               height    : "auto",
               opacity   : loaded ? 1 : 0,

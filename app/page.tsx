@@ -93,6 +93,7 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
               alt={getF(item.title,"titleAR")}
               objectPosition="top"
               naturalSize
+              className="max-h-[42vh] md:max-h-[68vh] max-w-[90vw] md:max-w-[80vw] w-auto h-auto"
             />
             <div className="absolute -inset-4 border border-[#b8955a]/15 pointer-events-none hidden md:block" />
           </motion.div>
