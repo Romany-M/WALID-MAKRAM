@@ -6,6 +6,7 @@ import {
   defaultConfig, loadConfig, saveConfig, uploadImage,
   GalleryConfig, ArtItem, MuralItem,
 } from "../lib/galleryData";
+import TranslateButton from "../components/TranslateButton";
 
 type Section = "hero"|"ancient"|"coptic"|"oil"|"various"|"murals";
 
@@ -34,6 +35,13 @@ const MURAL_FIELDS = [
   { key:"size",       label:"Size",           labelAR:"المساحة",          ph:"120 sqm"                        },
   { key:"year",       label:"Year",           labelAR:"السنة",            ph:"2021–2022"                      },
 ];
+
+// الحقول العربية وما يقابلها إنجليزي
+const AR_TO_EN: Record<string, string> = {
+  titleAR:    "title",
+  mediumAR:   "medium",
+  locationAR: "location",
+};
 
 const NAV: { key: Section; en: string; ar: string; icon: string }[] = [
   { key:"hero",    en:"Hero Image",     ar:"صورة الغلاف",       icon:"🖼️" },
@@ -98,6 +106,63 @@ function InputField({
   );
 }
 
+/* ══ FormFields — حقول الفورم مع زراير الترجمة ══ */
+function FormFields({
+  fields,
+  item,
+  onChange,
+}: {
+  fields: typeof ART_FIELDS;
+  item: ArtItem | MuralItem;
+  onChange: (key: string, value: string) => void;
+}) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const val = (key: string) => (item as any)[key] || "";
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {fields.map(f => {
+        const enKey = AR_TO_EN[f.key]; // لو الحقل عربي، enKey = المقابل الإنجليزي
+        return (
+          <div key={f.key} className={`flex flex-col gap-1 ${f.key === "src" ? "col-span-2" : ""}`}>
+            {/* label + زرار الترجمة جنب بعض */}
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-[10px] tracking-widest text-neutral-500 uppercase">
+                {f.label} <span className="text-neutral-700 normal-case">/ {f.labelAR}</span>
+              </label>
+              {/* زرار الترجمة فقط على الحقول العربية */}
+              {enKey && (
+                <TranslateButton
+                  arabicText={val(f.key)}
+                  onTranslated={en => onChange(enKey, en)}
+                />
+              )}
+            </div>
+            {f.key === "src" ? (
+              /* حقل الصورة مع رفع */
+              <InputField
+                label="" labelAR="" ph={f.ph}
+                value={val(f.key)}
+                onChange={v => onChange(f.key, v)}
+                span2 uploadable
+              />
+            ) : (
+              <input
+                value={val(f.key)}
+                onChange={e => onChange(f.key, e.target.value)}
+                placeholder={f.ph}
+                dir={f.key.endsWith("AR") ? "rtl" : "ltr"}
+                className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white text-xs
+                           placeholder:text-neutral-700 focus:outline-none focus:border-[#b8955a] transition"
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ══ ADMIN DASHBOARD ══ */
 export default function AdminDashboard() {
   const [cfg, setCfg]           = useState<GalleryConfig>(defaultConfig);
@@ -126,7 +191,6 @@ export default function AdminDashboard() {
     setDraggedOver(null);
   }, [active]);
 
-  // close sidebar on resize to desktop
   useEffect(() => {
     const fn = () => { if (window.innerWidth >= 768) setSidebarOpen(false); };
     window.addEventListener("resize", fn);
@@ -178,6 +242,7 @@ export default function AdminDashboard() {
     if (active === "murals")  return cfg.murals              || [];
     return [];
   };
+
   const setItems = (items: (ArtItem|MuralItem)[]) => {
     if (active === "murals")  { setCfg({ ...cfg, murals: items as MuralItem[] }); return; }
     if (active === "various") { setCfg({ ...cfg, variousWorks: items as ArtItem[] }); return; }
@@ -260,9 +325,7 @@ export default function AdminDashboard() {
       {/* ── Sidebar Mobile overlay ── */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
-          {/* backdrop */}
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          {/* drawer */}
           <aside className="relative z-10 w-64 bg-[#111] border-r border-white/10 flex flex-col h-full">
             <SidebarContent />
           </aside>
@@ -275,7 +338,6 @@ export default function AdminDashboard() {
         {/* ── Top Header ── */}
         <header className="flex items-center justify-between px-4 md:px-8 py-3 md:py-4 border-b border-white/10 bg-[#111] shrink-0 gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            {/* hamburger — mobile only */}
             <button
               onClick={() => setSidebarOpen(o => !o)}
               className="md:hidden flex flex-col gap-[5px] p-1.5 shrink-0"
@@ -292,7 +354,6 @@ export default function AdminDashboard() {
               {active !== "hero" && <p className="text-neutral-600 text-xs mt-0.5">{items.length} items</p>}
             </div>
           </div>
-
           <div className="flex gap-2 shrink-0">
             <button onClick={handleReset} disabled={saving}
               className="px-3 md:px-5 py-2 text-xs md:text-sm font-bold tracking-wider uppercase border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition disabled:opacity-40">
@@ -334,7 +395,7 @@ export default function AdminDashboard() {
               </div>
               <input type="file" ref={heroFileRef} accept="image/*" className="hidden" onChange={handleHeroFile} />
               {cfg.heroSrc && (
-                <div className="mt-4 overflow-hidden rounded border border-white/10" style={{ height: 200 }}>
+                <div className="mt-4 overflow-hidden rounded border border-white/10" style={{ height:200 }}>
                   <img src={cfg.heroSrc} className="w-full h-full object-cover opacity-60" alt="Preview" />
                 </div>
               )}
@@ -369,20 +430,27 @@ export default function AdminDashboard() {
                       } : undefined}
                     >
                       {isEditing ? (
-                        <div className="p-4 space-y-2 max-h-[75vh] overflow-y-auto">
-                          <p className="text-[#b8955a] text-[10px] tracking-widest uppercase mb-2">Editing</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {fields.map(f => (
-                              <InputField key={f.key} label={f.label} labelAR={f.labelAR} ph={f.ph}
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                value={(editItem as any)[f.key] || ""}
-                                onChange={v => editItem && setEditItem({ ...editItem, [f.key]: v } as ArtItem|MuralItem)}
-                                span2={f.key === "src"} uploadable={f.key === "src"} />
-                            ))}
-                          </div>
+                        <div className="p-4 space-y-3 max-h-[75vh] overflow-y-auto">
+                          <p className="text-[#b8955a] text-[10px] tracking-widest uppercase">
+                            ✏️ Editing — اكتب بالعربي واضغط ترجم
+                          </p>
+                          {/* ✅ FormFields مع زراير الترجمة */}
+                          <FormFields
+                            fields={fields}
+                            item={editItem!}
+                            onChange={(key, val) =>
+                              setEditItem(prev => prev ? { ...prev, [key]: val } as ArtItem|MuralItem : prev)
+                            }
+                          />
                           <div className="flex gap-2 pt-2">
-                            <button onClick={saveEdit} className="flex-1 bg-[#b8955a] text-black text-xs py-2 rounded hover:bg-[#a07848] transition font-medium">Save</button>
-                            <button onClick={() => { setEditIdx(null); setEditItem(null); }} className="flex-1 border border-white/20 text-white/60 text-xs py-2 rounded hover:bg-white/5 transition">Cancel</button>
+                            <button onClick={saveEdit}
+                              className="flex-1 bg-[#b8955a] text-black text-xs py-2 rounded hover:bg-[#a07848] transition font-medium">
+                              Save
+                            </button>
+                            <button onClick={() => { setEditIdx(null); setEditItem(null); }}
+                              className="flex-1 border border-white/20 text-white/60 text-xs py-2 rounded hover:bg-white/5 transition">
+                              Cancel
+                            </button>
                           </div>
                         </div>
                       ) : (
@@ -390,7 +458,9 @@ export default function AdminDashboard() {
                           <div className="relative bg-neutral-900" style={{ paddingTop:"56.25%" }}>
                             <img src={item.src} alt={item.title}
                               className="absolute inset-0 w-full h-full object-cover object-top opacity-75" />
-                            <span className="absolute top-2 right-2 bg-black/60 text-[10px] text-neutral-400 px-2 py-0.5 rounded">{idx + 1}</span>
+                            <span className="absolute top-2 right-2 bg-black/60 text-[10px] text-neutral-400 px-2 py-0.5 rounded">
+                              {idx + 1}
+                            </span>
                           </div>
                           <div className="p-3">
                             <p className="text-white text-sm font-light truncate">{item.title}</p>
@@ -415,27 +485,34 @@ export default function AdminDashboard() {
                 })}
               </div>
 
+              {/* ADD FORM */}
               {addMode ? (
                 <div className="bg-white/5 border border-[#b8955a]/30 rounded-lg p-4 md:p-6">
-                  <p className="text-[#b8955a] text-[10px] tracking-widest uppercase mb-4">Add New Item / إضافة عمل جديد</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {fields.map(f => (
-                      <InputField key={f.key} label={f.label} labelAR={f.labelAR} ph={f.ph}
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        value={(newItem as any)[f.key] || ""}
-                        onChange={v => setNewItem({ ...newItem, [f.key]: v } as ArtItem|MuralItem)}
-                        span2={f.key === "src"} uploadable={f.key === "src"} />
-                    ))}
-                  </div>
+                  <p className="text-[#b8955a] text-[10px] tracking-widest uppercase mb-4">
+                    Add New Item — اكتب بالعربي واضغط ترجم للحصول على الإنجليزي تلقائياً
+                  </p>
+                  {/* ✅ FormFields مع زراير الترجمة */}
+                  <FormFields
+                    fields={fields}
+                    item={newItem}
+                    onChange={(key, val) => setNewItem(prev => ({ ...prev, [key]: val }) as ArtItem|MuralItem)}
+                  />
                   <div className="flex gap-3 mt-4">
-                    <button onClick={addItem} className="px-6 py-2 bg-[#b8955a] text-black text-xs font-medium rounded hover:bg-[#a07848] transition uppercase tracking-wider">Add Item</button>
-                    <button onClick={() => setAddMode(false)} className="px-6 py-2 border border-white/20 text-white/60 text-xs rounded hover:bg-white/5 transition uppercase">Cancel</button>
+                    <button onClick={addItem}
+                      className="px-6 py-2 bg-[#b8955a] text-black text-xs font-medium rounded hover:bg-[#a07848] transition uppercase tracking-wider">
+                      Add Item
+                    </button>
+                    <button onClick={() => setAddMode(false)}
+                      className="px-6 py-2 border border-white/20 text-white/60 text-xs rounded hover:bg-white/5 transition uppercase">
+                      Cancel
+                    </button>
                   </div>
                 </div>
               ) : (
                 <button onClick={() => setAddMode(true)}
                   className="flex items-center gap-3 border border-dashed border-white/20 rounded-lg
-                             px-4 md:px-6 py-3 md:py-4 text-sm text-neutral-400 hover:text-white hover:border-[#b8955a]/50 transition group w-full md:w-auto">
+                             px-4 md:px-6 py-3 md:py-4 text-sm text-neutral-400 hover:text-white
+                             hover:border-[#b8955a]/50 transition group w-full md:w-auto">
                   <span className="text-2xl text-[#b8955a] group-hover:scale-110 transition-transform leading-none">+</span>
                   Add New Item / إضافة عمل جديد
                 </button>

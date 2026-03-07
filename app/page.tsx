@@ -155,26 +155,13 @@ function ArtCard({ src, title, titleAR, medium, mediumAR, dims, year, location, 
           objectPosition="top"
         />
       </div>
-      <div className="p-3 md:p-4" dir={isAR ? "rtl" : "ltr"}>
-        <div className="flex justify-between items-start gap-2">
-          <div className="min-w-0 overflow-hidden">
-            <h4 className={`font-semibold leading-snug truncate ${isAR ? "ar-card-text text-sm" : "text-[12px] md:text-[13px] tracking-[0.06em] uppercase text-neutral-900 dark:text-white"}`}>
-              {isAR ? titleAR : title}
-            </h4>
-            <p className={`mt-1 truncate ${isAR ? "ar-card-text text-xs text-neutral-500 dark:text-neutral-400" : "text-[11px] text-neutral-500 dark:text-neutral-400 tracking-wide italic"}`}>
-              {isAR ? mediumAR : medium}
-            </p>
-          </div>
-          <div className={`flex-shrink-0 text-${isAR ? "left" : "right"}`}>
-            <span className="text-[10px] md:text-[11px] tracking-widest text-[#b8955a] block">{year}</span>
-            {dims && <span className="text-[10px] md:text-[11px] tracking-widest text-neutral-400 dark:text-neutral-500 block">{dims}</span>}
-          </div>
+      <div className="px-3 py-2.5 md:px-4 md:py-3" dir={isAR ? "rtl" : "ltr"}>
+        <div className="flex items-center justify-between gap-2">
+          <h4 className={`leading-snug ${isAR ? "ar-card-text text-sm font-semibold" : "text-[11px] md:text-[12px] tracking-[0.06em] uppercase font-medium text-neutral-900 dark:text-white"}`}>
+            {isAR ? titleAR : title}
+          </h4>
+          <span className="text-[10px] tracking-widest text-[#b8955a] flex-shrink-0">{year}</span>
         </div>
-        {location && (
-          <p className={`mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-800 truncate ${isAR ? "ar-card-text text-xs text-neutral-500 dark:text-neutral-400" : "text-[10px] tracking-wider text-neutral-400 dark:text-neutral-500 uppercase"}`}>
-            {isAR ? locationAR : location}
-          </p>
-        )}
       </div>
     </motion.div>
   );
@@ -503,11 +490,11 @@ export default function Home() {
                 <p className={`${isAR?"border-r-2 pr-6 md:pr-8 ar-quote":"border-l-2 pl-6 md:pl-8"} border-[#b8955a] py-2 italic`}>{t.about_quote[lang]}</p>
                 <p className={isAR?"ar-description":""}>{t.about_p2[lang]}</p>
               </motion.div>
-              <motion.div className="flex flex-wrap gap-3 md:gap-6 pt-2 md:pt-4"
+              <motion.div className="flex flex-row flex-wrap gap-3 md:gap-6 pt-2 md:pt-4"
                 initial={{ opacity:0 }} whileInView={{ opacity:1 }} transition={{ duration:1, delay:0.9 }} viewport={{ once:true }}>
                 {socials.map(s=>(
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 md:gap-3 px-4 md:px-5 py-2.5 md:py-3 border border-neutral-300 dark:border-neutral-700 text-[10px] md:text-[11px] tracking-[0.35em] uppercase font-medium text-neutral-700 dark:text-neutral-300 transition-all duration-400 group"
+                    className="flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2 md:py-3 border border-neutral-300 dark:border-neutral-700 text-[10px] md:text-[11px] tracking-[0.25em] md:tracking-[0.35em] uppercase font-medium text-neutral-700 dark:text-neutral-300 transition-all duration-400 group"
                     onMouseEnter={e=>{const el=e.currentTarget;el.style.borderColor=s.color;el.style.color=s.color;}}
                     onMouseLeave={e=>{const el=e.currentTarget;el.style.borderColor="";el.style.color="";}}>
                     <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 md:w-4 md:h-4 fill-current flex-shrink-0"><path d={s.path}/></svg>
