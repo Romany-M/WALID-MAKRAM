@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang, t } from "./LanguageContext";
 
-/* ── map category slug → nameKey ── */
 const categoryToNameKey: Record<string, string> = {
   ancient: "gallery",
   coptic:  "gallery",
@@ -15,6 +14,14 @@ const categoryToNameKey: Record<string, string> = {
   murals:  "murals_domes",
 };
 
+const links = [
+  { nameKey: "gallery",      href: "#gallery", id: "gallery"  },
+  { nameKey: "murals_domes", href: "#murals",  id: "murals"   },
+  { nameKey: "various_art",  href: "#various", id: "various"  },
+  { nameKey: "about",        href: "#about",   id: "about"    },
+  { nameKey: "contact",      href: "#contact", id: "contact"  },
+];
+
 export default function Navbar() {
   const pathname = usePathname();
   const [active,   setActive]   = useState<string>("");
@@ -22,34 +29,25 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, toggleLang } = useLang();
 
-  if (pathname?.startsWith("/admin")) return null;
+  // ✅ كل الـ hooks لازم تيجي قبل أي return
+  const isAdmin = pathname?.startsWith("/admin") ?? false;
+  const isHome  = pathname === "/";
 
-  const isHome = pathname === "/";
-
-  const links = [
-    { nameKey: "gallery",      href: "#gallery", id: "gallery"  },
-    { nameKey: "murals_domes", href: "#murals",  id: "murals"   },
-    { nameKey: "various_art",  href: "#various", id: "various"  },
-    { nameKey: "about",        href: "#about",   id: "about"    },
-    { nameKey: "contact",      href: "#contact", id: "contact"  },
-  ];
-
-  useEffect(() => { document.documentElement.classList.add("dark"); }, []);
-
-  /* ── Active من الـ URL لو في subpage ── */
   useEffect(() => {
-    if (isHome) return;
+    document.documentElement.classList.add("dark");
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin || isHome) return;
     const parts = pathname?.split("/") ?? [];
-    // /gallery/[category]
     if (parts[1] === "gallery" && parts[2]) {
       const key = categoryToNameKey[parts[2]];
       if (key) setActive(key);
     }
-  }, [pathname, isHome]);
+  }, [pathname, isHome, isAdmin]);
 
-  /* ── Scroll Spy (home only) ── */
   useEffect(() => {
-    if (!isHome) return;
+    if (isAdmin || !isHome) return;
     const handleScroll = () => {
       const middle = window.scrollY + window.innerHeight / 2;
       let current = "";
@@ -64,7 +62,7 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHome]);
+  }, [isHome, isAdmin]);
 
   useEffect(() => {
     const onResize = () => { if (window.innerWidth >= 768) setMenuOpen(false); };
@@ -77,6 +75,9 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  // ✅ الـ early return بعد كل الـ hooks
+  if (isAdmin) return null;
+
   const toggleTheme = () => {
     const html = document.documentElement;
     if (isDark) html.classList.remove("dark");
@@ -87,9 +88,7 @@ export default function Navbar() {
   const handleNavClick = (id: string, nameKey: string) => {
     setActive(nameKey);
     setMenuOpen(false);
-    if (!isHome) {
-      sessionStorage.setItem("scrollToSection", id);
-    }
+    if (!isHome) sessionStorage.setItem("scrollToSection", id);
   };
 
   return (
@@ -131,7 +130,6 @@ export default function Navbar() {
                     : "text-neutral-700 dark:text-neutral-300 hover:text-amber-500 dark:hover:text-amber-400"}`}>
                 {t[link.nameKey][lang]}
               </Link>
-              {/* ── underline + dot للـ active في subpage ── */}
               <span className={`absolute left-0 -bottom-2 h-[1px] bg-[#b8955a] transition-all duration-400
                 ${active === link.nameKey ? "w-full" : "w-0"}`}/>
               {!isHome && active === link.nameKey && (

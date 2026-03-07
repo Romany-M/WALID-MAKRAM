@@ -138,7 +138,8 @@ export default function GalleryDetailPage() {
             </div>
 
             <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden" onClick={e => e.stopPropagation()}>
-              <div className="flex-1 flex items-center justify-center relative p-8 md:p-16">
+              {/* ✅ ارتفاع ثابت على الموبايل */}
+              <div className="h-[42vh] shrink-0 md:h-auto md:flex-1 flex items-center justify-center relative p-8 md:p-16">
                 <button
                   className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
                   onClick={() => setLb((lb - 1 + items.length) % items.length)}>‹
@@ -163,7 +164,7 @@ export default function GalleryDetailPage() {
 
               <motion.div key={`i-${lb}`}
                 initial={{ opacity: 0, x: isAR ? -24 : 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
-                className={`w-full md:w-[500px] shrink-0 flex flex-col justify-center px-12 py-14 border-t md:border-t-0 md:border-l ${isDark ? "border-white/10 bg-transparent" : "border-neutral-200 bg-white"}`}>
+                className={`w-full md:w-[500px] shrink-0 flex flex-col justify-start md:justify-center px-12 py-8 md:py-14 border-t md:border-t-0 md:border-l overflow-y-auto flex-1 md:flex-none ${isDark ? "border-white/10 bg-transparent" : "border-neutral-200 bg-white"}`}>
                 <p className="text-[#b8955a] text-[10px] tracking-[0.65em] uppercase mb-6">— {currentItem.year} —</p>
                 <h3 className={`font-extralight leading-relaxed mb-10 text-3xl tracking-[0.15em] ${isDark ? "text-white" : "text-neutral-900"}`}>
                   {getField(currentItem, currentItem.title, "titleAR", isAR)}

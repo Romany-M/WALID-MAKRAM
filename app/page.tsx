@@ -84,7 +84,8 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
         </button>
       </div>
       <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex-1 flex items-center justify-center relative p-4 md:p-16 overflow-hidden min-h-0">
+        {/* ✅ ارتفاع ثابت على الموبايل — مش بيتأثر بمحتوى الـ info panel */}
+        <div className="h-[42vh] shrink-0 md:h-auto md:flex-1 flex items-center justify-center relative p-4 md:p-16 overflow-hidden">
           <button className={`absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 md:w-12 h-16 md:h-20 flex items-center justify-center text-4xl md:text-5xl transition z-10 ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
             onClick={() => onNav((index-1+total)%total)}>‹</button>
           <motion.div key={index} initial={{ opacity:0, scale:0.97 }} animate={{ opacity:1, scale:1 }} transition={{ duration:0.5, ease:"easeOut" }} className="relative inline-flex">
@@ -100,7 +101,7 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
             onClick={() => onNav((index+1)%total)}>›</button>
         </div>
         <motion.div key={`info-${index}`} initial={{ opacity:0, x: isAR ? -24 : 24 }} animate={{ opacity:1, x:0 }} transition={{ duration:0.5, delay:0.1 }}
-          className={`w-full md:w-[420px] lg:w-[500px] shrink-0 flex flex-col justify-center px-6 md:px-12 py-6 md:py-14 border-t md:border-t-0 md:border-l overflow-y-auto ${isDark ? "border-white/10 bg-transparent" : "border-neutral-200 bg-white"}`}>
+          className={`w-full md:w-[420px] lg:w-[500px] shrink-0 flex flex-col justify-start md:justify-center px-6 md:px-12 py-6 md:py-14 border-t md:border-t-0 md:border-l overflow-y-auto flex-1 md:flex-none ${isDark ? "border-white/10 bg-transparent" : "border-neutral-200 bg-white"}`}>
           <p className="text-[#b8955a] text-[10px] tracking-[0.65em] uppercase mb-4 md:mb-6">— {item.year} —</p>
           <h3 className={`font-extralight leading-relaxed mb-6 md:mb-10 ${isDark ? "text-white" : "text-neutral-900"} ${isAR ? "ar-section-title text-xl md:text-2xl" : "text-2xl md:text-3xl tracking-[0.15em]"}`}>
             {getF(item.title,"titleAR")}
