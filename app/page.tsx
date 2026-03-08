@@ -71,7 +71,7 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
 
   return (
     <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}
-      className={`fixed inset-0 z-[300] flex flex-col ${isDark ? "bg-black text-white" : "bg-white text-neutral-900"}`}
+      className={`fixed inset-0 z-[300] backdrop-blur-sm flex flex-col ${isDark ? "bg-black/97 text-white" : "bg-white/97 text-neutral-900"}`}
       onClick={onClose} dir={isAR ? "rtl" : "ltr"}>
       <div className={`flex justify-between items-center px-4 md:px-8 py-4 md:py-5 flex-shrink-0 border-b ${isDark ? "border-white/10" : "border-neutral-200"}`}>
         <span className={`text-xs tracking-[0.5em] font-light ${isDark ? "text-white/40" : "text-neutral-400"}`}>
@@ -155,7 +155,14 @@ function ArtCard({ src, title, titleAR, medium, mediumAR, dims, year, location, 
           objectPosition="top"
         />
       </div>
-
+      <div className="px-3 py-2.5 md:px-4 md:py-3" dir={isAR ? "rtl" : "ltr"}>
+        <div className="flex items-center justify-between gap-2">
+          <h4 className={`leading-snug ${isAR ? "ar-card-text text-sm font-semibold" : "text-[11px] md:text-[12px] tracking-[0.06em] uppercase font-medium text-neutral-900 dark:text-white"}`}>
+            {isAR ? titleAR : title}
+          </h4>
+          <span className="text-[10px] tracking-widest text-[#b8955a] flex-shrink-0">{year}</span>
+        </div>
+      </div>
     </motion.div>
   );
 }
