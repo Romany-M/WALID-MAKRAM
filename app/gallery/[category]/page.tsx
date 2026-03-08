@@ -122,7 +122,7 @@ export default function GalleryDetailPage() {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className={`fixed inset-0 z-[300] backdrop-blur-sm flex flex-col ${isDark ? "bg-black/97" : "bg-white/97"}`}
+            className={`fixed inset-0 z-[300] flex flex-col ${isDark ? "bg-black" : "bg-white"}`}
             onClick={() => setLb(null)}
             dir={isAR ? "rtl" : "ltr"}
           >
