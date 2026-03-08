@@ -257,28 +257,14 @@ export default function GalleryDetailPage() {
                     </svg>
                   </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform duration-500 pointer-events-none" dir={isAR ? "rtl" : "ltr"}>
-                  <p className={`text-white font-medium ${isAR ? "ar-card-text text-sm" : "text-[10px] tracking-[0.35em] uppercase"}`}>
-                    {getField(item, item.title, "titleAR", isAR)}
-                  </p>
-                  <p className="text-[#f0cc8a] text-[9px] mt-1">
-                    {getField(item, item.location, "locationAR", isAR)}
-                  </p>
-                </div>
+
               </div>
-              <div className={`mt-4 pb-3 border-b flex justify-between items-baseline gap-3 ${isDark ? "border-neutral-800" : "border-neutral-200"}`}>
-                <p className="text-[9px] text-neutral-500 italic">
-                  {getField(item, item.medium, "mediumAR", isAR)}
+              <div className="mt-3">
+                <p className={`truncate font-medium mb-1 ${isAR ? "ar-card-text text-sm text-neutral-800 dark:text-white" : "text-[11px] tracking-[0.08em] uppercase text-neutral-800 dark:text-white"}`}>
+                  {getField(item, item.title, "titleAR", isAR)}
                 </p>
-                <div className="text-right flex-shrink-0">
-                  {"dims" in item && <span className="text-[9px] tracking-widest text-neutral-400 block">{(item as ArtItem).dims}</span>}
-                  {"size" in item && <span className="text-[9px] tracking-widest text-neutral-400 block">{(item as MuralItem).size}</span>}
-                  <span className="text-[9px] tracking-widest text-neutral-400 block">{item.year}</span>
-                </div>
+                <span className="text-[10px] tracking-widest text-[#b8955a]">{item.year}</span>
               </div>
-              <p className={`mt-2 truncate ${isAR ? "ar-card-text text-xs text-neutral-500 dark:text-neutral-400" : "text-[9px] tracking-wider text-neutral-400 dark:text-neutral-500 uppercase"}`}>
-                {getField(item, item.location, "locationAR", isAR)}
-              </p>
             </motion.div>
           ))}
         </div>
