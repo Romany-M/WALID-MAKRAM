@@ -56,23 +56,7 @@ export function useAntiDevTools() {
     printStyle.innerHTML = `@media print { body { display: none !important; } }`;
     document.head.appendChild(printStyle);
 
-    // ── 7. كشف DevTools عبر window size ─────────────────────────
-    let devOpen = false;
-    const devCheck = () => {
-      const th   = 160;
-      const open =
-        window.outerWidth  - window.innerWidth  > th ||
-        window.outerHeight - window.innerHeight > th;
-      if (open === devOpen) return;
-      devOpen = open;
-      document.body.style.filter        = open ? "blur(14px)" : "";
-      document.body.style.pointerEvents = open ? "none"       : "";
-      document.body.style.userSelect    = open ? "none"       : "";
-    };
-    const iv = setInterval(devCheck, 800);
-    window.addEventListener("resize", devCheck);
-
-    // ── 8. منع Screenshot عبر Print Screen key ───────────────────
+    // ── 7. منع Screenshot عبر Print Screen key ───────────────────
     const noPrtSc = (e: KeyboardEvent) => {
       if (e.key === "PrintScreen") {
         e.preventDefault();
@@ -91,8 +75,6 @@ export function useAntiDevTools() {
       document.removeEventListener("keydown",      noKeys, true);
       document.removeEventListener("copy",         noCopy);
       document.removeEventListener("keyup",        noPrtSc);
-      window.removeEventListener("resize",         devCheck);
-      clearInterval(iv);
       document.getElementById("__no_print__")?.remove();
       document.body.style.filter        = "";
       document.body.style.pointerEvents = "";
