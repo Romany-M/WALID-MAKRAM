@@ -21,8 +21,8 @@ export default function WatermarkedImage({
 }: Props) {
   const canvasRef   = useRef<HTMLCanvasElement>(null);
   const imgRef      = useRef<HTMLImageElement | null>(null);
-  const [loaded, setLoaded]           = useState(false);
-  const [displaySize, setDisplaySize] = useState<{ w: number; h: number; dpr: number } | null>(null);
+  const [loaded, setLoaded]         = useState(false);
+  const [displaySize, setDisplaySize] = useState<{ w: number; h: number } | null>(null);
 
   /* ── رسم الصورة + watermark ────────────────────────────────── */
   const draw = useCallback(
@@ -81,20 +81,20 @@ export default function WatermarkedImage({
 
   /* ── حساب حجم العرض في الـ lightbox ────────────────────────── */
   const calcDisplaySize = useCallback((nw: number, nh: number) => {
-    const vw  = window.innerWidth;
-    const vh  = window.innerHeight;
-    const dpr = window.devicePixelRatio || 1; // ← مهم على موبايل Retina
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
     const isMobile = vw < 768;
 
+    // على الموبايل الـ layout عمودي — الصورة تاخد النص العلوي
+    // على الـ desktop الـ layout جنب بجنب — الـ info panel بياخد ~500px
     const maxW = isMobile ? vw * 0.88 : (vw - 520) * 0.88;
     const maxH = isMobile ? vh * 0.45 : vh * 0.72;
 
-    // حجم CSS (بالـ logical pixels)
-    const cssScale = Math.min(maxW / nw, maxH / nh, 1);
-    const cssW = Math.round(nw * cssScale);
-    const cssH = Math.round(nh * cssScale);
-
-    setDisplaySize({ w: cssW, h: cssH, dpr });
+    const scale = Math.min(maxW / nw, maxH / nh, 1); // مش نكبّر أكبر من الحجم الأصلي
+    setDisplaySize({
+      w: Math.round(nw * scale),
+      h: Math.round(nh * scale),
+    });
   }, []);
 
   /* ── تحميل الصورة ──────────────────────────────────────────── */
@@ -112,22 +112,9 @@ export default function WatermarkedImage({
 
     img.onload = () => {
       if (naturalSize) {
-        const vw  = window.innerWidth;
-        const vh  = window.innerHeight;
-        const dpr = window.devicePixelRatio || 1;
-        const isMobile = vw < 768;
-        const maxW = isMobile ? vw * 0.88 : (vw - 520) * 0.88;
-        const maxH = isMobile ? vh * 0.45 : vh * 0.72;
-        const cssScale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
-        const cssW = Math.round(img.naturalWidth  * cssScale);
-        const cssH = Math.round(img.naturalHeight * cssScale);
-
-        // ← الـ canvas الداخلي بـ DPR عشان يكون sharp على Retina
-        canvas.width  = cssW * dpr;
-        canvas.height = cssH * dpr;
-        const ctx2 = canvas.getContext("2d");
-        if (ctx2) ctx2.scale(dpr, dpr);
-        setDisplaySize({ w: cssW, h: cssH, dpr });
+        canvas.width  = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        calcDisplaySize(img.naturalWidth, img.naturalHeight);
       } else {
         const rect    = canvas.getBoundingClientRect();
         canvas.width  = rect.width  || img.naturalWidth;
@@ -154,20 +141,7 @@ export default function WatermarkedImage({
     const img = imgRef.current;
     if (!img?.complete || !img.naturalWidth) return;
 
-          const onResize = () => {
-        const img = imgRef.current;
-        if (!img?.complete || !img.naturalWidth) return;
-        calcDisplaySize(img.naturalWidth, img.naturalHeight);
-        // أعد رسم الـ canvas بالحجم الجديد
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ds = displaySize;
-        if (!ds) return;
-        canvas.width  = ds.w * ds.dpr;
-        canvas.height = ds.h * ds.dpr;
-        const ctx2 = canvas.getContext("2d");
-        if (ctx2) { ctx2.scale(ds.dpr, ds.dpr); draw(canvas, img); }
-      };
+    const onResize = () => calcDisplaySize(img.naturalWidth, img.naturalHeight);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [naturalSize, calcDisplaySize]);
@@ -214,11 +188,10 @@ export default function WatermarkedImage({
     naturalSize && displaySize
       ? {
           display   : "block",
-          width     : `${displaySize.w}px`,
+          width     : `${displaySize.w}px`,   // ← أبعاد محسوبة بدقة
           height    : `${displaySize.h}px`,
           opacity   : loaded ? 1 : 0,
-          transition: "opacity 0.4s ease",
-          imageRendering: "crisp-edges", // ← منع browser blur إضافي
+          transition: "opacity 0.6s ease",
         }
       : naturalSize
       ? {
