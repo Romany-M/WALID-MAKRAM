@@ -6,7 +6,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import { loadConfig, ArtItem, MuralItem } from "../../lib/galleryData";
 import { useLang } from "../../components/LanguageContext";
 import WatermarkedImage from "../../components/WatermarkedImage";
-import { useAntiDevTools } from "../../hooks/useAntiDevTools";
+
+/* ══ LIGHTBOX IMAGE ══ */
+function LightboxImage({ src, alt = "", watermark = "Walid Makram ©" }: { src: string; alt?: string; watermark?: string }) {
+  return (
+    <div className="relative inline-block select-none" onContextMenu={e => e.preventDefault()} onDragStart={e => e.preventDefault()}>
+      <img src={src} alt={alt} draggable={false}
+        className="block max-h-[42vh] md:max-h-[68vh] max-w-[88vw] md:max-w-[75vw] w-auto h-auto object-contain"
+        style={{ pointerEvents:"none", userSelect:"none" }} />
+      <div className="absolute inset-0 z-10" onContextMenu={e => e.preventDefault()} style={{ WebkitUserSelect:"none", userSelect:"none" }} />
+      <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <span key={i} className="absolute text-white/20 font-semibold select-none"
+            style={{ fontSize:"clamp(10px,2.5vw,14px)", transform:"rotate(-25deg)", whiteSpace:"nowrap",
+              left:`${(i%3)*35-5}%`, top:`${Math.floor(i/3)*28-5}%`,
+              textShadow:"1px 1px 3px rgba(0,0,0,0.5)", letterSpacing:"0.05em" }}>
+            {watermark}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type Item = ArtItem | MuralItem;
 
@@ -40,9 +61,6 @@ function getField(item: Item, enVal: string, arKey: string, isAR: boolean): stri
 const PAGE_SIZE = 8;
 
 export default function GalleryDetailPage() {
-  // ✅ useAntiDevTools هنا جوه الـ component
-  useAntiDevTools();
-
   const params   = useParams();
   const router   = useRouter();
   const category = getCategoryStr(params.category);
@@ -122,7 +140,7 @@ export default function GalleryDetailPage() {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className={`fixed inset-0 z-[300] backdrop-blur-sm flex flex-col ${isDark ? "bg-black/97" : "bg-white/97"}`}
+            className={`fixed inset-0 z-[300] flex flex-col ${isDark ? "bg-black" : "bg-white"}`}
             onClick={() => setLb(null)}
             dir={isAR ? "rtl" : "ltr"}
           >
@@ -138,26 +156,21 @@ export default function GalleryDetailPage() {
             </div>
 
             <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden" onClick={e => e.stopPropagation()}>
-              {/* ✅ ارتفاع ثابت على الموبايل */}
-              <div className="h-[42vh] shrink-0 md:h-auto md:flex-1 flex items-center justify-center relative p-8 md:p-16">
+              <div className="h-[42vh] shrink-0 md:h-auto md:flex-1 flex items-center justify-center relative p-4 md:p-16">
                 <button
-                  className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition z-10 ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
                   onClick={() => setLb((lb - 1 + items.length) % items.length)}>‹
                 </button>
-
                 <motion.div key={lb} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
                   className="relative inline-flex">
-                  <WatermarkedImage
+                  <LightboxImage
                     src={currentItem.src}
                     alt={getField(currentItem, currentItem.title, "titleAR", isAR)}
-                    objectPosition="top"
-                    naturalSize
                   />
-                  <div className="absolute -inset-4 border border-[#b8955a]/15 pointer-events-none" />
+                  <div className="absolute -inset-4 border border-[#b8955a]/15 pointer-events-none hidden md:block" />
                 </motion.div>
-
                 <button
-                  className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
+                  className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-20 flex items-center justify-center text-5xl transition z-10 ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
                   onClick={() => setLb((lb + 1) % items.length)}>›
                 </button>
               </div>
@@ -222,7 +235,6 @@ export default function GalleryDetailPage() {
           <span className="text-neutral-500 text-sm">{items.length} {isAR ? "عمل" : "works"}</span>
         </div>
 
-        {/* ── Grid 8 صور في الصفحة ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-start">
           {pageItems.map((item, i) => (
             <motion.div key={`${page}-${i}`}
@@ -230,8 +242,6 @@ export default function GalleryDetailPage() {
               transition={{ duration: 0.8, delay: i * 0.06 }}
               className="group cursor-pointer"
               onClick={() => setLb(page * PAGE_SIZE + i)}>
-
-              {/* ── صورة بـ WatermarkedImage ── */}
               <div className="overflow-hidden bg-neutral-100 dark:bg-neutral-900 relative aspect-[4/5]">
                 <WatermarkedImage
                   src={item.src}
@@ -240,7 +250,6 @@ export default function GalleryDetailPage() {
                   objectPosition="top"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#b8955a]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-                {/* أيقونة التكبير */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition pointer-events-none">
                   <div className="w-11 h-11 rounded-full border border-white/60 flex items-center justify-center backdrop-blur-sm bg-black/20">
                     <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-white fill-none" strokeWidth="1.6">
@@ -248,7 +257,6 @@ export default function GalleryDetailPage() {
                     </svg>
                   </div>
                 </div>
-                {/* hover: الاسم فوق الصورة */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform duration-500 pointer-events-none" dir={isAR ? "rtl" : "ltr"}>
                   <p className={`text-white font-medium ${isAR ? "ar-card-text text-sm" : "text-[10px] tracking-[0.35em] uppercase"}`}>
                     {getField(item, item.title, "titleAR", isAR)}
@@ -258,8 +266,6 @@ export default function GalleryDetailPage() {
                   </p>
                 </div>
               </div>
-
-              {/* بيانات تحت الصورة */}
               <div className={`mt-4 pb-3 border-b flex justify-between items-baseline gap-3 ${isDark ? "border-neutral-800" : "border-neutral-200"}`}>
                 <p className="text-[9px] text-neutral-500 italic">
                   {getField(item, item.medium, "mediumAR", isAR)}
@@ -277,7 +283,6 @@ export default function GalleryDetailPage() {
           ))}
         </div>
 
-        {/* ── Pagination ── */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-3 mt-16">
             <button onClick={() => goToPage(page - 1)} disabled={page === 0}

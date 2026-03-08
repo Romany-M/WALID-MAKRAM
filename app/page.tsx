@@ -9,7 +9,28 @@ import {
   defaultConfig, loadConfig,
 } from "./lib/galleryData";
 import WatermarkedImage from "./components/WatermarkedImage";
-import { useAntiDevTools } from "./hooks/useAntiDevTools";
+
+/* ══ LIGHTBOX IMAGE ══ */
+function LightboxImage({ src, alt = "", watermark = "Walid Makram ©" }: { src: string; alt?: string; watermark?: string }) {
+  return (
+    <div className="relative inline-block select-none" onContextMenu={e => e.preventDefault()} onDragStart={e => e.preventDefault()}>
+      <img src={src} alt={alt} draggable={false}
+        className="block max-h-[42vh] md:max-h-[68vh] max-w-[88vw] md:max-w-[75vw] w-auto h-auto object-contain"
+        style={{ pointerEvents:"none", userSelect:"none" }} />
+      <div className="absolute inset-0 z-10" onContextMenu={e => e.preventDefault()} style={{ WebkitUserSelect:"none", userSelect:"none" }} />
+      <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <span key={i} className="absolute text-white/20 font-semibold select-none"
+            style={{ fontSize:"clamp(10px,2.5vw,14px)", transform:"rotate(-25deg)", whiteSpace:"nowrap",
+              left:`${(i%3)*35-5}%`, top:`${Math.floor(i/3)*28-5}%`,
+              textShadow:"1px 1px 3px rgba(0,0,0,0.5)", letterSpacing:"0.05em" }}>
+            {watermark}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 let _preloaderShown = false;
 
@@ -71,7 +92,7 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
 
   return (
     <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}
-      className={`fixed inset-0 z-[300] backdrop-blur-sm flex flex-col ${isDark ? "bg-black/97 text-white" : "bg-white/97 text-neutral-900"}`}
+      className={`fixed inset-0 z-[300] flex flex-col ${isDark ? "bg-black text-white" : "bg-white text-neutral-900"}`}
       onClick={onClose} dir={isAR ? "rtl" : "ltr"}>
       <div className={`flex justify-between items-center px-4 md:px-8 py-4 md:py-5 flex-shrink-0 border-b ${isDark ? "border-white/10" : "border-neutral-200"}`}>
         <span className={`text-xs tracking-[0.5em] font-light ${isDark ? "text-white/40" : "text-neutral-400"}`}>
@@ -84,17 +105,11 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
         </button>
       </div>
       <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden" onClick={e => e.stopPropagation()}>
-        {/* ✅ ارتفاع ثابت على الموبايل — مش بيتأثر بمحتوى الـ info panel */}
         <div className="h-[42vh] shrink-0 md:h-auto md:flex-1 flex items-center justify-center relative p-4 md:p-16 overflow-hidden">
           <button className={`absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 md:w-12 h-16 md:h-20 flex items-center justify-center text-4xl md:text-5xl transition z-10 ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
             onClick={() => onNav((index-1+total)%total)}>‹</button>
           <motion.div key={index} initial={{ opacity:0, scale:0.97 }} animate={{ opacity:1, scale:1 }} transition={{ duration:0.5, ease:"easeOut" }} className="relative inline-flex">
-            <WatermarkedImage
-              src={item.src}
-              alt={getF(item.title,"titleAR")}
-              objectPosition="top"
-              naturalSize
-            />
+            <LightboxImage src={item.src} alt={getF(item.title,"titleAR")} />
             <div className="absolute -inset-4 border border-[#b8955a]/15 pointer-events-none hidden md:block" />
           </motion.div>
           <button className={`absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 md:w-12 h-16 md:h-20 flex items-center justify-center text-4xl md:text-5xl transition z-10 ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
@@ -135,7 +150,7 @@ function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: 
 }
 
 /* ══ ART CARD ══ */
-function ArtCard({ src, title, titleAR, medium, mediumAR, dims, year, location, locationAR, delay=0, onClick }: ArtItem & { delay?:number; onClick?:()=>void }) {
+function ArtCard({ src, title, titleAR, delay=0, onClick }: ArtItem & { delay?:number; onClick?:()=>void }) {
   const { lang } = useLang();
   const isAR = lang === "AR";
   return (
@@ -155,13 +170,10 @@ function ArtCard({ src, title, titleAR, medium, mediumAR, dims, year, location, 
           objectPosition="top"
         />
       </div>
-      <div className="px-3 py-2.5 md:px-4 md:py-3" dir={isAR ? "rtl" : "ltr"}>
-        <div className="flex items-center justify-between gap-2">
-          <h4 className={`leading-snug ${isAR ? "ar-card-text text-sm font-semibold" : "text-[11px] md:text-[12px] tracking-[0.06em] uppercase font-medium text-neutral-900 dark:text-white"}`}>
-            {isAR ? titleAR : title}
-          </h4>
-          <span className="text-[10px] tracking-widest text-[#b8955a] flex-shrink-0">{year}</span>
-        </div>
+      <div className="px-3 py-2 border-t border-neutral-100 dark:border-neutral-800" dir={isAR ? "rtl" : "ltr"}>
+        <p className={`truncate ${isAR ? "ar-card-text text-xs text-neutral-700 dark:text-neutral-300" : "text-[10px] tracking-[0.12em] uppercase text-neutral-700 dark:text-neutral-300"}`}>
+          {isAR ? titleAR : title}
+        </p>
       </div>
     </motion.div>
   );
@@ -311,9 +323,6 @@ function ContactForm() {
    PAGE
 ════════════════════════════════ */
 export default function Home() {
-  // ✅ useAntiDevTools هنا جوه الـ component
-  useAntiDevTools();
-
   const { lang } = useLang();
   const isAR = lang === "AR";
   const [muralLb,   setMuralLb]   = useState<number|null>(null);
@@ -342,7 +351,7 @@ export default function Home() {
     } else { window.scrollTo(0, 0); }
   }, []);
 
-  useEffect(() => { const load = async () => { const data = await loadConfig(); setCfg(data); }; load(); }, []);
+  useEffect(() => { loadConfig().then(setCfg); }, []);
 
   const handlePreloaderDone = () => { _preloaderShown = true; setLoading(false); localStorage.setItem("preloaderShown", "true"); };
 
@@ -411,18 +420,10 @@ export default function Home() {
                     <div className="absolute top-[4px] right-[4px] w-4 md:w-6 h-4 md:w-6 border-t-2 border-r-2 border-[#b8955a]" />
                     <div className="absolute bottom-[4px] left-[4px] w-4 md:w-6 h-4 md:h-6 border-b-2 border-l-2 border-[#b8955a]" />
                     <div className="absolute bottom-[4px] right-[4px] w-4 md:w-6 h-4 md:h-6 border-b-2 border-r-2 border-[#b8955a]" />
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-                      style={{ boxShadow:"inset 0 0 30px rgba(184,149,90,0.15), 0 0 25px rgba(184,149,90,0.2)" }} />
                   </div>
                   <div className="overflow-hidden">
-                    {/* murals تستخدم WatermarkedImage كمان */}
                     <div className="relative w-full h-[50vw] sm:h-[300px] md:h-[460px]">
-                      <WatermarkedImage
-                        src={m.src}
-                        alt={isAR ? m.titleAR : m.title}
-                        className="absolute inset-0 w-full h-full brightness-50 group-hover:brightness-90 group-hover:scale-105 transition-all duration-700 ease-out"
-                        objectPosition="top"
-                      />
+                      <WatermarkedImage src={m.src} alt={isAR?m.titleAR:m.title} className="absolute inset-0 w-full h-full brightness-50 group-hover:brightness-90 group-hover:scale-105 transition-all duration-700 ease-out" objectPosition="top"/>
                     </div>
                     <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-8 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-gradient-to-t from-black/90 via-black/30 to-transparent" dir={isAR?"rtl":"ltr"}>
                       <p className="text-white text-[10px] md:text-[11px] tracking-[0.35em] uppercase font-medium drop-shadow mb-1">{isAR?m.titleAR:m.title}</p>
@@ -528,7 +529,6 @@ export default function Home() {
             </div>
           </div>
         </footer>
-
       </main>
     </>
   );
