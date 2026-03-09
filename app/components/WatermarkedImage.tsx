@@ -56,7 +56,7 @@ export default function WatermarkedImage({
 
       // ── watermark مكرر مائل ──
       const fontSize = Math.max(12, Math.round(cw * 0.028));
-      ctx.font       = `600 ${fontSize}px Arial, sans-serif`;
+      ctx.font       = `400 ${fontSize}px Arial, sans-serif`;
       ctx.textAlign  = "center";
       const stepX    = cw * 0.38;
       const stepY    = ch * 0.28;
@@ -70,7 +70,7 @@ export default function WatermarkedImage({
           ctx.shadowBlur    = 4;
           ctx.shadowOffsetX = 1;
           ctx.shadowOffsetY = 1;
-          ctx.fillStyle     = "rgba(255,255,255,0.20)";
+          ctx.fillStyle     = "rgba(255,255,255,0.10)";
           ctx.fillText(watermark, 0, 0);
           ctx.restore();
         }
