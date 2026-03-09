@@ -20,12 +20,12 @@ function LightboxImage({ src, alt = "", watermark = "Walid Makram ©" }: { src: 
       <div className="absolute inset-0 z-10" onContextMenu={e => e.preventDefault()} style={{ WebkitUserSelect:"none", userSelect:"none" }} />
       <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
         {Array.from({ length: 12 }).map((_, i) => (
-          <span key={i} className="absolute text-white/20 font-semibold select-none"
-            style={{ fontSize:"clamp(10px,2.5vw,14px)", transform:"rotate(-25deg)", whiteSpace:"nowrap",
-              left:`${(i%3)*35-5}%`, top:`${Math.floor(i/3)*28-5}%`,
-              textShadow:"1px 1px 3px rgba(0,0,0,0.5)", letterSpacing:"0.05em" }}>
-            {watermark}
-          </span>
+          <span key={i} className="absolute text-white/[0.055] font-light select-none"
+  style={{ fontSize:"clamp(9px,2vw,13px)", transform:"rotate(-25deg)", whiteSpace:"nowrap",
+    left:`${(i%3)*38-5}%`, top:`${Math.floor(i/3)*30-5}%`,
+    textShadow:"1px 1px 2px rgba(0,0,0,0.25)", letterSpacing:"0.03em" }}>
+  {watermark}
+</span>
         ))}
       </div>
     </div>

@@ -54,23 +54,25 @@ export default function WatermarkedImage({
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
       }
 
+      // في دالة draw — بدّل الجزء الخاص بالـ watermark بالكود ده:
+
       // ── watermark مكرر مائل ──
-      const fontSize = Math.max(12, Math.round(cw * 0.028));
-      ctx.font       = `400 ${fontSize}px Arial, sans-serif`;
+      const fontSize = Math.max(10, Math.round(cw * 0.022)); // ← أصغر شوية
+      ctx.font       = `300 ${fontSize}px Arial, sans-serif`; // ← 300 بدل 400 (أرفع)
       ctx.textAlign  = "center";
-      const stepX    = cw * 0.38;
-      const stepY    = ch * 0.28;
+      const stepX    = cw * 0.42;  // ← تباعد أكبر = عدد أقل
+      const stepY    = ch * 0.32;
 
       for (let y = stepY * 0.5; y < ch + stepY; y += stepY) {
         for (let x = stepX * 0.5; x < cw + stepX; x += stepX) {
           ctx.save();
           ctx.translate(x, y);
           ctx.rotate(-Math.PI / 7);
-          ctx.shadowColor   = "rgba(0,0,0,0.55)";
-          ctx.shadowBlur    = 4;
+          ctx.shadowColor   = "rgba(0,0,0,0.3)";  // ← shadow أخف
+          ctx.shadowBlur    = 3;
           ctx.shadowOffsetX = 1;
           ctx.shadowOffsetY = 1;
-          ctx.fillStyle     = "rgba(255,255,255,0.10)";
+          ctx.fillStyle     = "rgba(255,255,255,0.055)"; // ← 0.10 → 0.055
           ctx.fillText(watermark, 0, 0);
           ctx.restore();
         }
