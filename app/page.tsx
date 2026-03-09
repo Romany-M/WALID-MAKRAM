@@ -423,9 +423,9 @@ export default function Home() {
                   </div>
                   <div className="overflow-hidden">
                     <div className="relative w-full h-[50vw] sm:h-[300px] md:h-[460px]">
-                      <WatermarkedImage src={m.src} alt={isAR?m.titleAR:m.title} className="absolute inset-0 w-full h-full brightness-50 group-hover:brightness-90 group-hover:scale-105 transition-all duration-700 ease-out" objectPosition="top"/>
+                      <WatermarkedImage src={m.src} alt={isAR?m.titleAR:m.title} className="absolute inset-0 w-full h-full group-hover:scale-105 transition-all duration-700 ease-out" objectPosition="top"/>
                     </div>
-                    <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-8 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-gradient-to-t from-black/90 via-black/30 to-transparent" dir={isAR?"rtl":"ltr"}>
+                    <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-8 opacity-0 group-hover:opacity-100 transition-all duration-500" dir={isAR?"rtl":"ltr"}>
                       <p className="text-white text-[10px] md:text-[11px] tracking-[0.35em] uppercase font-medium drop-shadow mb-1">{isAR?m.titleAR:m.title}</p>
                       <p className="text-[#f0cc8a] text-[8px] md:text-[9px] tracking-[0.3em] uppercase mb-3 md:mb-4 drop-shadow">{isAR?m.locationAR:m.location}</p>
                       <div className="flex flex-wrap gap-2 md:gap-3 text-[8px] md:text-[9px] tracking-[0.25em] text-neutral-300 uppercase">

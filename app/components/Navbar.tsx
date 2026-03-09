@@ -34,7 +34,7 @@ export default function Navbar() {
   const isHome  = pathname === "/";
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("dark");
   }, []);
 
   useEffect(() => {
