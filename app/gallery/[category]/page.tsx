@@ -1,33 +1,146 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { loadConfig, ArtItem, MuralItem } from "../../lib/galleryData";
 import { useLang } from "../../components/LanguageContext";
 import WatermarkedImage from "../../components/WatermarkedImage";
 
-/* ══ LIGHTBOX IMAGE ══ */
-function LightboxImage({ src, alt = "", watermark = "Walid Makram ©" }: { src: string; alt?: string; watermark?: string }) {
+/* ══ ZOOMABLE LIGHTBOX IMAGE ══ */
+function ZoomableLightboxImage({
+  src, alt = "", watermark = "Walid Makram ©",
+}: { src: string; alt?: string; watermark?: string }) {
+  const [scale,  setScale]  = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging   = useRef(false);
+  const dragStart    = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
+  const lastTap      = useRef(0);
+  const currentScale = useRef(1); // ref لأسرع access في event handlers
+
+  useEffect(() => {
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+    currentScale.current = 1;
+  }, [src]);
+
+  const clamp = (s: number, ox: number, oy: number) => {
+    const el = containerRef.current;
+    if (!el) return { x: ox, y: oy };
+    const { width: w, height: h } = el.getBoundingClientRect();
+    const maxX = Math.max(0, (w * s - w) / 2);
+    const maxY = Math.max(0, (h * s - h) / 2);
+    return {
+      x: Math.min(maxX, Math.max(-maxX, ox)),
+      y: Math.min(maxY, Math.max(-maxY, oy)),
+    };
+  };
+
+  // ── Wheel zoom ──
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setScale(s => {
+      const next = Math.min(5, Math.max(1, s - e.deltaY * 0.003));
+      currentScale.current = next;
+      if (next === 1) setOffset({ x: 0, y: 0 });
+      else setOffset(o => clamp(next, o.x, o.y));
+      return next;
+    });
+  };
+
+  // ── Mouse drag ──
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (currentScale.current <= 1) return;
+    e.preventDefault();
+    isDragging.current = true;
+    setOffset(o => {
+      dragStart.current = { x: e.clientX, y: e.clientY, ox: o.x, oy: o.y };
+      return o;
+    });
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    setOffset(clamp(currentScale.current, dragStart.current.ox + dx, dragStart.current.oy + dy));
+  };
+
+  const onMouseUp = () => { isDragging.current = false; };
+
+  // ── Double tap (mobile) ──
+  const onTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      const next = currentScale.current > 1.2 ? 1 : 2.5;
+      currentScale.current = next;
+      setScale(next);
+      setOffset(next === 1 ? { x: 0, y: 0 } : o => clamp(next, o.x, o.y));
+    }
+    lastTap.current = now;
+  };
+
   return (
-    <div className="relative inline-block select-none" onContextMenu={e => e.preventDefault()} onDragStart={e => e.preventDefault()}>
-      <img src={src} alt={alt} draggable={false}
-        className="block max-h-[42vh] md:max-h-[68vh] max-w-[88vw] md:max-w-[75vw] w-auto h-auto object-contain"
-        style={{ pointerEvents:"none", userSelect:"none" }} />
-      <div className="absolute inset-0 z-10" onContextMenu={e => e.preventDefault()} style={{ WebkitUserSelect:"none", userSelect:"none" }} />
+    <div
+      ref={containerRef}
+      className="relative inline-block select-none overflow-hidden"
+      style={{ touchAction: "none" }}
+      onContextMenu={e => e.preventDefault()}
+      onDragStart={e => e.preventDefault()}
+      onWheel={onWheel}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      onTouchEnd={onTouchEnd}
+    >
+      <div style={{
+        transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
+        transition: isDragging.current ? "none" : "transform 0.25s ease",
+        transformOrigin: "center center",
+        willChange: "transform",
+        cursor: scale > 1 ? (isDragging.current ? "grabbing" : "grab") : "default",
+      }}>
+        <img
+          src={src} alt={alt} draggable={false}
+          className="block max-h-[42vh] md:max-h-[68vh] max-w-[88vw] md:max-w-[75vw] w-auto h-auto object-contain"
+          style={{ pointerEvents: "none", userSelect: "none" }}
+        />
+      </div>
+
+      {/* watermark */}
       <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
         {Array.from({ length: 12 }).map((_, i) => (
-          <span key={i} className="absolute text-white/20 font-semibold select-none"
-            style={{ fontSize:"clamp(10px,2.5vw,14px)", transform:"rotate(-25deg)", whiteSpace:"nowrap",
-              left:`${(i%3)*35-5}%`, top:`${Math.floor(i/3)*28-5}%`,
-              textShadow:"1px 1px 3px rgba(0,0,0,0.5)", letterSpacing:"0.05em" }}>
+          <span key={i} className="absolute text-white/[0.055] font-light select-none"
+            style={{ fontSize: "clamp(9px,2vw,13px)", transform: "rotate(-25deg)", whiteSpace: "nowrap",
+              left: `${(i % 3) * 38 - 5}%`, top: `${Math.floor(i / 3) * 30 - 5}%`,
+              textShadow: "1px 1px 2px rgba(0,0,0,0.25)", letterSpacing: "0.03em" }}>
             {watermark}
           </span>
         ))}
       </div>
+
+      {/* hint */}
+      {scale === 1 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap">
+          <span className="text-white/30 text-[10px] tracking-widest hidden md:block">scroll to zoom · drag to pan</span>
+          <span className="text-white/30 text-[10px] tracking-widest md:hidden">double tap to zoom</span>
+        </div>
+      )}
+
+      {/* zoom % */}
+      {scale > 1 && (
+        <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm px-2 py-1 pointer-events-none">
+          <span className="text-white/60 text-[10px] tracking-widest">{Math.round(scale * 100)}%</span>
+        </div>
+      )}
     </div>
   );
 }
+
+/* ══════════════════════════════════════════════════════ */
 
 type Item = ArtItem | MuralItem;
 
@@ -71,9 +184,9 @@ export default function GalleryDetailPage() {
   const meta      = categoryMeta[category] ?? { labelEN: category, labelAR: category };
   const metaLabel = isAR ? meta.labelAR : meta.labelEN;
 
-  const [items,  setItems] = useState<Item[]>([]);
-  const [lb,     setLb]    = useState<number | null>(null);
-  const [page,   setPage]  = useState(0);
+  const [items, setItems] = useState<Item[]>([]);
+  const [lb,    setLb]    = useState<number | null>(null);
+  const [page,  setPage]  = useState(0);
 
   const totalPages = Math.ceil(items.length / PAGE_SIZE);
   const pageItems  = items.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
@@ -103,10 +216,7 @@ export default function GalleryDetailPage() {
     };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
   }, [lb, items.length]);
 
   const [isDark, setIsDark] = useState(false);
@@ -163,7 +273,7 @@ export default function GalleryDetailPage() {
                 </button>
                 <motion.div key={lb} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
                   className="relative inline-flex">
-                  <LightboxImage
+                  <ZoomableLightboxImage
                     src={currentItem.src}
                     alt={getField(currentItem, currentItem.title, "titleAR", isAR)}
                   />
@@ -257,7 +367,6 @@ export default function GalleryDetailPage() {
                     </svg>
                   </div>
                 </div>
-
               </div>
               <div className="mt-3">
                 <p className={`truncate font-medium mb-1 ${isAR ? "ar-card-text text-sm text-neutral-800 dark:text-white" : "text-[11px] tracking-[0.08em] uppercase text-neutral-800 dark:text-white"}`}>
