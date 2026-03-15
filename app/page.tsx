@@ -16,16 +16,16 @@ function ZoomableLightboxImage({
 }: { src: string; alt?: string; watermark?: string }) {
   const [scale,  setScale]  = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isDragging   = useRef(false);
-  const dragStart    = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
-  const lastTap      = useRef(0);
-  const currentScale = useRef(1); // ref لأسرع access في event handlers
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const isDragging    = useRef(false);
+  const dragStart     = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
+  const lastTap       = useRef(0);
+  const currentScale  = useRef(1);
+  const currentOffset = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    setScale(1);
-    setOffset({ x: 0, y: 0 });
-    currentScale.current = 1;
+    setScale(1); setOffset({ x: 0, y: 0 });
+    currentScale.current = 1; currentOffset.current = { x: 0, y: 0 };
   }, [src]);
 
   const clamp = (s: number, ox: number, oy: number) => {
@@ -40,50 +40,69 @@ function ZoomableLightboxImage({
     };
   };
 
-  // ── Wheel zoom ──
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    setScale(s => {
-      const next = Math.min(5, Math.max(1, s - e.deltaY * 0.003));
-      currentScale.current = next;
-      if (next === 1) setOffset({ x: 0, y: 0 });
-      else setOffset(o => clamp(next, o.x, o.y));
-      return next;
-    });
+  const applyOffset = (o: { x: number; y: number }) => {
+    currentOffset.current = o;
+    setOffset(o);
   };
 
-  // ── Mouse drag ──
+  // ── Wheel zoom (desktop) ──
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const next = Math.min(5, Math.max(1, currentScale.current - e.deltaY * 0.003));
+    currentScale.current = next;
+    if (next === 1) { applyOffset({ x: 0, y: 0 }); }
+    else { applyOffset(clamp(next, currentOffset.current.x, currentOffset.current.y)); }
+    setScale(next);
+  };
+
+  // ── Mouse drag (desktop) ──
   const onMouseDown = (e: React.MouseEvent) => {
     if (currentScale.current <= 1) return;
     e.preventDefault();
     isDragging.current = true;
-    setOffset(o => {
-      dragStart.current = { x: e.clientX, y: e.clientY, ox: o.x, oy: o.y };
-      return o;
-    });
+    dragStart.current = { x: e.clientX, y: e.clientY, ox: currentOffset.current.x, oy: currentOffset.current.y };
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
     if (!isDragging.current) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
-    setOffset(clamp(currentScale.current, dragStart.current.ox + dx, dragStart.current.oy + dy));
+    applyOffset(clamp(currentScale.current, dragStart.current.ox + dx, dragStart.current.oy + dy));
   };
 
   const onMouseUp = () => { isDragging.current = false; };
 
-  // ── Double tap (mobile) ──
-  const onTouchEnd = (e: React.TouchEvent) => {
-    e.stopPropagation();
-    const now = Date.now();
-    if (now - lastTap.current < 300) {
-      const next = currentScale.current > 1.2 ? 1 : 2.5;
-      currentScale.current = next;
-      setScale(next);
-      setOffset(next === 1 ? { x: 0, y: 0 } : o => clamp(next, o.x, o.y));
+  // ── Touch (mobile) ──
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      // double tap → zoom
+      const now = Date.now();
+      if (now - lastTap.current < 300) {
+        const next = currentScale.current > 1.2 ? 1 : 2.5;
+        currentScale.current = next;
+        setScale(next);
+        if (next === 1) { applyOffset({ x: 0, y: 0 }); }
+        else { applyOffset(clamp(next, currentOffset.current.x, currentOffset.current.y)); }
+      }
+      lastTap.current = Date.now();
+      // drag start
+      dragStart.current = {
+        x: e.touches[0].clientX, y: e.touches[0].clientY,
+        ox: currentOffset.current.x, oy: currentOffset.current.y,
+      };
     }
-    lastTap.current = now;
   };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault(); // منع scroll الصفحة
+    if (e.touches.length === 1 && currentScale.current > 1) {
+      const dx = e.touches[0].clientX - dragStart.current.x;
+      const dy = e.touches[0].clientY - dragStart.current.y;
+      applyOffset(clamp(currentScale.current, dragStart.current.ox + dx, dragStart.current.oy + dy));
+    }
+  };
+
+  const onTouchEnd = () => { isDragging.current = false; };
 
   return (
     <div
@@ -97,6 +116,8 @@ function ZoomableLightboxImage({
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
       <div style={{
@@ -129,7 +150,7 @@ function ZoomableLightboxImage({
       {scale === 1 && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap">
           <span className="text-white/30 text-[10px] tracking-widest hidden md:block">scroll to zoom · drag to pan</span>
-          <span className="text-white/30 text-[10px] tracking-widest md:hidden">double tap to zoom</span>
+          <span className="text-white/30 text-[10px] tracking-widest md:hidden">double tap to zoom · drag to pan</span>
         </div>
       )}
 
