@@ -12,19 +12,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority       : 1.0,
     },
     {
-      url            : `${base}/gallery/ancient`,
+      url            : `${base}/gallery/icons`,
       lastModified   : now,
       changeFrequency: "weekly",
       priority       : 0.9,
     },
     {
-      url            : `${base}/gallery/coptic`,
+      url            : `${base}/gallery/gilding`,
       lastModified   : now,
       changeFrequency: "weekly",
       priority       : 0.9,
     },
     {
-      url            : `${base}/gallery/oil`,
+      url            : `${base}/gallery/mosaic`,
       lastModified   : now,
       changeFrequency: "weekly",
       priority       : 0.9,
@@ -36,7 +36,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority       : 0.9,
     },
     {
-      url            : `${base}/gallery/various`,
+      url            : `${base}/gallery/exhibitions`,
       lastModified   : now,
       changeFrequency: "weekly",
       priority       : 0.8,

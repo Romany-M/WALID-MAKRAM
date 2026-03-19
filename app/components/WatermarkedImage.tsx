@@ -18,7 +18,7 @@ export default function WatermarkedImage({
   alt = "",
   className = "",
   style: styleProp,
-  watermark = "Walid Makram ©",
+  watermark = "Dana Dahdal ©",
   objectPosition = "top",
   naturalSize = false,
   hoverScale,

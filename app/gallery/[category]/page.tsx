@@ -15,20 +15,22 @@ function getCategoryStr(raw: string | string[] | undefined): string {
   return raw ?? "";
 }
 
+// ✅ UPDATED CATEGORY META
 const categoryMeta: Record<string, { labelEN: string; labelAR: string }> = {
-  ancient: { labelEN: "Ancient Art",    labelAR: "الفن القديم"       },
-  coptic:  { labelEN: "Coptic Art",     labelAR: "الفن القبطي"       },
-  oil:     { labelEN: "Oil Paintings",  labelAR: "اللوحات الزيتية"  },
-  various: { labelEN: "Various Works",  labelAR: "أعمال متنوعة"      },
-  murals:  { labelEN: "Murals & Domes", labelAR: "الجداريات والقباب" },
+  icons:       { labelEN: "Icons",                     labelAR: "أيقونات" },
+  gilding:     { labelEN: "Gilding & Engraving",       labelAR: "تذهيب ونقش" },
+  mosaic:      { labelEN: "Mosaic",                    labelAR: "فسيفساء" },
+  exhibitions: { labelEN: "Exhibitions",               labelAR: "معارض" },
+  murals:      { labelEN: "Murals & Domes",            labelAR: "الجداريات والقباب" },
 };
 
+// ✅ UPDATED SECTION IDS
 const sectionId: Record<string, string> = {
-  ancient: "gallery",
-  coptic:  "gallery",
-  oil:     "gallery",
-  various: "various",
-  murals:  "murals",
+  icons:       "gallery",
+  gilding:     "gallery",
+  mosaic:      "gallery",
+  exhibitions: "exhibitions",
+  murals:      "murals",
 };
 
 function getField(item: Item, enVal: string, arKey: string, isAR: boolean): string {
@@ -58,19 +60,22 @@ export default function GalleryDetailPage() {
   const pageItems  = items.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   useEffect(() => {
-    const load = async () => {
-      const cfg = await loadConfig();
-      const map: Record<string, Item[]> = {
-        ancient: cfg.galleryData.ancient,
-        coptic:  cfg.galleryData.coptic,
-        oil:     cfg.galleryData.oil,
-        various: cfg.variousWorks,
-        murals:  cfg.murals,
-      };
-      setItems(map[category] ?? []);
+  const load = async () => {
+    const cfg = await loadConfig();
+
+    const map: Record<string, Item[]> = {
+      icons:       cfg.galleryData.icons,
+      gilding:     cfg.galleryData.gilding,
+      mosaic:      cfg.galleryData.mosaic,
+      exhibitions: cfg.exhibitions,
+      murals:      cfg.murals,
     };
-    load();
-  }, [category]);
+
+    setItems(map[category] ?? []);
+  };
+
+  load();
+}, [category]);
 
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {

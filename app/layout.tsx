@@ -38,26 +38,26 @@ const almarai = Almarai({
 /* ══ SEO Metadata ══ */
 export const metadata: Metadata = {
   title: {
-    default : "Walid Makram | Art Gallery — معرض وليد مكرم ",
-    template: "%s | Walid Makram Art Gallery",
+    default : "Dana Dahdal | Art Gallery — معرض دانا دحدال",
+    template: "%s | Dana Dahdal Art Gallery",
   },
   description:
-    "Walid Makram — Egyptian artist specializing in Ancient Egyptian Art, Coptic Art, Oil Paintings, and monumental Murals & Domes. معرض وليد مكرم الفنان المصري متخصص في الفن المصري القديم، الفن القبطي، اللوحات الزيتية والجداريات.",
+    "Dana Dahdal — Iconographer specializing in Byzantine, Greek Orthodox, and Syrian sacred art, icons and church murals. دانا دهدال فنانة متخصصة في الفن البيزنطي والأيقونات والجداريات الكنسية.",
   keywords: [
-    "Walid Makram", "Waled Makram", "وليد مكرم",
-    "Walid Makram Art", "Walid Makram Gallery", "معرض وليد مكرم",
-    "Egyptian Artist", "فنان مصري",
-    "Ancient Egyptian Art", "الفن المصري القديم",
-    "Coptic Art", "الفن القبطي",
-    "Oil Paintings", "لوحات زيتية",
-    "Murals Egypt", "جداريات مصر",
-    "Church Murals Egypt", "جداريات كنائس مصر",
-    "Art Gallery Egypt", "معرض فن مصر",
-    "painter egypt", "رسام مصري",
+    "Dana Dahdal", "دانا دحدال",
+    "Dana Dahdal Art", "Dana Dahdal Gallery", "معرض دانا دحدال",
+    "Byzantine Art", "الفن البيزنطي",
+    "Greek Orthodox Art", "الفن الأرثوذكسي اليوناني",
+    "Syrian Christian Art", "الفن المسيحي السوري",
+    "Iconography", "الأيقونات",
+    "Sacred Art", "فن ديني",
+    "Church Icons", "أيقونات كنسية",
+    "Murals", "جداريات",
+    "Religious Art", "فن ديني",
   ],
-  authors    : [{ name: "Walid Makram", url: "https://walid-makram.vercel.app" }],
-  creator    : "Walid Makram",
-  metadataBase: new URL("https://walid-makram.vercel.app"),
+  authors    : [{ name: "Dana Dahdal" }],
+  creator    : "Dana Dahdal",
+  metadataBase: new URL("https://your-domain.com"),
   alternates : {
     canonical: "/",
     languages: { "en-US": "/", "ar-EG": "/" },
@@ -66,22 +66,22 @@ export const metadata: Metadata = {
     type           : "website",
     locale         : "en_US",
     alternateLocale: "ar_EG",
-    url            : "https://walid-makram.vercel.app",
-    siteName       : "Walid Makram Art Gallery",
-    title          : "Walid Makram | Egyptian Artist — معرض وليد مكرم",
-    description    : "Discover the art of Walid Makram — Ancient Egyptian, Coptic, Oil Paintings & Murals. اكتشف أعمال وليد مكرم الفنية.",
+    url            : "https://your-domain.com",
+    siteName       : "Dana Dahdal Art Gallery",
+    title          : "Dana Dahdal | Byzantine Iconographer",
+    description    : "Discover Byzantine, Greek Orthodox & Syrian sacred art and iconography",
     images: [{
-      url   : "https://walid-makram.vercel.app/og-image.jpg",
+      url   : "https://your-domain.com/og-image.jpg",
       width : 1200,
       height: 630,
-      alt   : "Walid Makram Art Gallery",
+      alt   : "Dana Dahdal Art Gallery",
     }],
   },
   twitter: {
     card       : "summary_large_image",
-    title      : "Walid Makram | Egyptian Artist",
-    description: "Ancient Egyptian Art, Coptic Art, Oil Paintings & Murals",
-    images     : ["https://walid-makram.vercel.app/og-image.jpg"],
+    title      : "Dana Dahdal | Iconographer",
+    description: "Byzantine & Sacred Art",
+    images     : ["https://your-domain.com/og-image.jpg"],
   },
   robots: {
     index    : true,
@@ -99,33 +99,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
-        {/* JSON-LD — بيساعد جوجل يفهم الموقع */}
+
+        {/* JSON-LD */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
-              "@context"    : "https://schema.org",
-              "@type"       : "ArtGallery",
-              "name"        : "Walid Makram Art Gallery",
-              "alternateName": ["معرض وليد مكرم", "Waled Makram Gallery"],
-              "description" : "Egyptian artist specializing in Ancient Egyptian Art, Coptic Art, Oil Paintings and Murals",
-              "url"         : "https://walid-makram.vercel.app",
-              "image"       : "https://walid-makram.vercel.app/og-image.jpg",
+              "@context": "https://schema.org",
+              "@type": "ArtGallery",
+              "name": "Dana Dahdal Art Gallery",
+              "alternateName": ["معرض دانا دحدال"],
+              "description": "Iconographer specializing in Byzantine, Greek Orthodox and Syrian sacred art",
+              "url": "https://your-domain.com",
+              "image": "https://your-domain.com/og-image.jpg",
               "founder": {
-                "@type"        : "Person",
-                "name"         : "Walid Makram",
-                "alternateName": "وليد مكرم",
-                "jobTitle"     : "Artist",
-                "nationality"  : "Egyptian",
+                "@type": "Person",
+                "name": "Dana Dahdal",
+                "jobTitle": "Iconographer",
               },
               "sameAs": [
-                "https://www.instagram.com/painterwaled",
-                "https://www.facebook.com/painter.waled.makram",
+                "https://www.instagram.com/dana.dahdal.iconographer",
+                "https://www.facebook.com/dana.dahdal.58"
               ],
             }),
           }}
         />
       </head>
+
       <body className={`${cormorant.variable} ${outfit.variable} ${amiri.variable} ${almarai.variable} ${outfit.className}`}>
         <LanguageProvider>
           <LenisProvider>
