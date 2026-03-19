@@ -63,25 +63,62 @@ export default function FullscreenLightbox({ items, index, onClose, onNav }: Pro
   const item  = items[index];
   const total = items.length;
 
-  const [showInfo, setShowInfo] = useState(false);
-  const [scale,    setScale]    = useState(1);
-  const [offset,   setOffset]   = useState({ x: 0, y: 0 });
+  const [showInfo,   setShowInfo]   = useState(false);
+  const [scale,      setScale]      = useState(1);
+  const [zoomPct,    setZoomPct]    = useState(1); // فقط للـ indicator عشان ما نعملش re-render بسببه
 
-  const containerRef  = useRef<HTMLDivElement>(null);
-  const isDragging    = useRef(false);
-  const dragStart     = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
-  const lastTap       = useRef(0);
-  const currentScale  = useRef(1);
-  const currentOffset = useRef({ x: 0, y: 0 });
-  const lastPinchDist = useRef<number | null>(null);
-  const isPinching    = useRef(false);
+  // ── refs للحالة الداخلية (بدون re-render) ──
+  const containerRef    = useRef<HTMLDivElement>(null);
+  const imgWrapperRef   = useRef<HTMLDivElement>(null);  // ← DOM direct update
+  const rafRef          = useRef<number | null>(null);
+  const isDragging      = useRef(false);
+  const dragStart       = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
+  const lastTap         = useRef(0);
+  const currentScale    = useRef(1);
+  const currentOffset   = useRef({ x: 0, y: 0 });
+  const lastPinchDist   = useRef<number | null>(null);
+  const isPinching      = useRef(false);
 
+  // ── apply transform مباشرة على DOM (أسرع من setState) ──
+  const applyTransform = useCallback((s: number, ox: number, oy: number, animate = false) => {
+    const el = imgWrapperRef.current;
+    if (!el) return;
+    el.style.transition = animate ? "transform 0.25s ease" : "none";
+    el.style.transform  = `scale(${s}) translate(${ox / s}px, ${oy / s}px)`;
+  }, []);
+
+  const clamp = useCallback((s: number, ox: number, oy: number) => {
+    const el = containerRef.current;
+    if (!el) return { x: ox, y: oy };
+    const { width: w, height: h } = el.getBoundingClientRect();
+    const maxX = Math.max(0, (w * s - w) / 2);
+    const maxY = Math.max(0, (h * s - h) / 2);
+    return {
+      x: Math.min(maxX, Math.max(-maxX, ox)),
+      y: Math.min(maxY, Math.max(-maxY, oy)),
+    };
+  }, []);
+
+  const applyScale = useCallback((next: number) => {
+    const s = Math.min(5, Math.max(1, next));
+    const o = s === 1 ? { x: 0, y: 0 } : clamp(s, currentOffset.current.x, currentOffset.current.y);
+    currentScale.current  = s;
+    currentOffset.current = o;
+    applyTransform(s, o.x, o.y, true);
+    setScale(s);
+    setZoomPct(s);
+  }, [clamp, applyTransform]);
+
+  // reset لما الصورة تتغير — مع الاحتفاظ بحالة showInfo
   useEffect(() => {
-    setScale(1); setOffset({ x: 0, y: 0 });
-    currentScale.current = 1; currentOffset.current = { x: 0, y: 0 };
-    setShowInfo(false);
-  }, [index]);
+    currentScale.current  = 1;
+    currentOffset.current = { x: 0, y: 0 };
+    setScale(1);
+    setZoomPct(1);
+    applyTransform(1, 0, 0, true);
+  }, [index, applyTransform]);
 
+  // keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape")     onClose();
@@ -93,56 +130,43 @@ export default function FullscreenLightbox({ items, index, onClose, onNav }: Pro
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
   }, [index, total, onClose, onNav]);
 
-  const clamp = useCallback((s: number, ox: number, oy: number) => {
-    const el = containerRef.current;
-    if (!el) return { x: ox, y: oy };
-    const { width: w, height: h } = el.getBoundingClientRect();
-    const maxX = Math.max(0, (w * s - w) / 2);
-    const maxY = Math.max(0, (h * s - h) / 2);
-    return { x: Math.min(maxX, Math.max(-maxX, ox)), y: Math.min(maxY, Math.max(-maxY, oy)) };
-  }, []);
-
-  const applyScale = useCallback((next: number, ox?: number, oy?: number) => {
-    const s = Math.min(5, Math.max(1, next));
-    currentScale.current = s;
-    setScale(s);
-    if (s === 1) {
-      currentOffset.current = { x: 0, y: 0 };
-      setOffset({ x: 0, y: 0 });
-    } else {
-      const o = clamp(s, ox ?? currentOffset.current.x, oy ?? currentOffset.current.y);
-      currentOffset.current = o;
-      setOffset(o);
-    }
-  }, [clamp]);
-
-  const onWheel = (e: React.WheelEvent) => {
+  // ── Wheel ──
+  const onWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     applyScale(currentScale.current - e.deltaY * 0.003);
-  };
+  }, [applyScale]);
 
-  const onMouseDown = (e: React.MouseEvent) => {
+  // ── Mouse drag ──
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
     if (currentScale.current <= 1) return;
     e.preventDefault();
     isDragging.current = true;
     dragStart.current = { x: e.clientX, y: e.clientY, ox: currentOffset.current.x, oy: currentOffset.current.y };
-  };
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current) return;
-    const o = clamp(currentScale.current,
-      dragStart.current.ox + e.clientX - dragStart.current.x,
-      dragStart.current.oy + e.clientY - dragStart.current.y);
-    currentOffset.current = o; setOffset(o);
-  };
-  const onMouseUp = () => { isDragging.current = false; };
+    if (imgWrapperRef.current) imgWrapperRef.current.style.cursor = "grabbing";
+  }, []);
 
-  const onTouchStart = (e: React.TouchEvent) => {
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    const ox = dragStart.current.ox + e.clientX - dragStart.current.x;
+    const oy = dragStart.current.oy + e.clientY - dragStart.current.y;
+    const o  = clamp(currentScale.current, ox, oy);
+    currentOffset.current = o;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => applyTransform(currentScale.current, o.x, o.y));
+  }, [clamp, applyTransform]);
+
+  const onMouseUp = useCallback(() => {
+    isDragging.current = false;
+    if (imgWrapperRef.current) imgWrapperRef.current.style.cursor = currentScale.current > 1 ? "grab" : "default";
+  }, []);
+
+  // ── Touch ──
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
     e.stopPropagation();
     if (e.touches.length === 2) {
       isPinching.current = true;
       const [a, b] = [e.touches[0], e.touches[1]];
       lastPinchDist.current = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
-      // سجّل نقطة البداية للـ drag أثناء الـ pinch كمان
       dragStart.current = {
         x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2,
         ox: currentOffset.current.x, oy: currentOffset.current.y,
@@ -161,34 +185,46 @@ export default function FullscreenLightbox({ items, index, onClose, onNav }: Pro
         ox: currentOffset.current.x, oy: currentOffset.current.y,
       };
     }
-  };
-  const onTouchMove = (e: React.TouchEvent) => {
+  }, [applyScale]);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.touches.length === 2 && lastPinchDist.current !== null) {
       const [a, b] = [e.touches[0], e.touches[1]];
-      const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+      const dist  = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
       const ratio = dist / lastPinchDist.current;
       lastPinchDist.current = dist;
-      applyScale(currentScale.current * ratio);
-    } else if (e.touches.length === 1 && !isPinching.current && currentScale.current > 1) {
-      const o = clamp(
-        currentScale.current,
-        dragStart.current.ox + e.touches[0].clientX - dragStart.current.x,
-        dragStart.current.oy + e.touches[0].clientY - dragStart.current.y,
-      );
+      const s = Math.min(5, Math.max(1, currentScale.current * ratio));
+      const o = s === 1 ? { x: 0, y: 0 } : clamp(s, currentOffset.current.x, currentOffset.current.y);
+      currentScale.current  = s;
       currentOffset.current = o;
-      setOffset(o);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        applyTransform(s, o.x, o.y);
+        setZoomPct(s);
+      });
+    } else if (e.touches.length === 1 && !isPinching.current && currentScale.current > 1) {
+      const ox = dragStart.current.ox + e.touches[0].clientX - dragStart.current.x;
+      const oy = dragStart.current.oy + e.touches[0].clientY - dragStart.current.y;
+      const o  = clamp(currentScale.current, ox, oy);
+      currentOffset.current = o;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => applyTransform(currentScale.current, o.x, o.y));
     }
-  };
-  const onTouchEnd = (e: React.TouchEvent) => {
+  }, [clamp, applyTransform]);
+
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
     e.stopPropagation();
     if (e.touches.length < 2) {
-      isPinching.current = false;
+      // sync React state بعد انتهاء الـ pinch
+      setScale(currentScale.current);
+      setZoomPct(currentScale.current);
+      isPinching.current    = false;
       lastPinchDist.current = null;
     }
     isDragging.current = false;
-  };
+  }, []);
 
   const get = (en: string, arKey: string) => isAR && item[arKey] ? item[arKey] : en;
 
@@ -227,7 +263,7 @@ export default function FullscreenLightbox({ items, index, onClose, onNav }: Pro
 
       {/* Main */}
       <div className="absolute inset-0 flex">
-        {/* Image */}
+        {/* Image container */}
         <div
           ref={containerRef}
           className="flex-1 flex items-center justify-center overflow-hidden"
@@ -243,23 +279,24 @@ export default function FullscreenLightbox({ items, index, onClose, onNav }: Pro
           onContextMenu={e => e.preventDefault()}
           onDragStart={e => e.preventDefault()}
         >
-          {/* wrapper للـ fade-in animation فقط */}
+          {/* fade-in فقط هنا */}
           <motion.div
             key={index}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+            transition={{ duration: 0.35 }}
+            className="flex items-center justify-center"
           >
-            {/* wrapper للـ zoom + pan */}
-            <div style={{
-              transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
-              transition: isDragging.current ? "none" : "transform 0.2s ease",
-              transformOrigin: "center center",
-              cursor: scale > 1 ? (isDragging.current ? "grabbing" : "grab") : "default",
-              willChange: "transform",
-              touchAction: "none",
-            }}>
+            {/* zoom + pan هنا عبر DOM مباشرة */}
+            <div
+              ref={imgWrapperRef}
+              style={{
+                transform: "scale(1) translate(0px, 0px)",
+                transformOrigin: "center center",
+                willChange: "transform",
+                cursor: scale > 1 ? "grab" : "default",
+              }}
+            >
               <img
                 src={item.src}
                 alt={get(item.title, "titleAR")}
@@ -289,9 +326,9 @@ export default function FullscreenLightbox({ items, index, onClose, onNav }: Pro
               <span className="text-white/20 text-[10px] tracking-widest md:hidden">pinch to zoom · double tap</span>
             </div>
           )}
-          {scale > 1 && (
+          {zoomPct > 1 && (
             <div className="absolute top-16 right-3 bg-black/50 backdrop-blur-sm px-2 py-1 pointer-events-none rounded">
-              <span className="text-white/50 text-[10px] tracking-widest">{Math.round(scale * 100)}%</span>
+              <span className="text-white/50 text-[10px] tracking-widest">{Math.round(zoomPct * 100)}%</span>
             </div>
           )}
         </div>
@@ -360,12 +397,12 @@ export default function FullscreenLightbox({ items, index, onClose, onNav }: Pro
               <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-6" />
               <InfoContent item={item} isAR={isAR} />
               <div className="flex gap-3 mt-8">
-                <button onClick={() => { onNav((index - 1 + total) % total); setShowInfo(false); }}
+                <button onClick={() => onNav((index - 1 + total) % total)}
                   className="flex-1 border border-white/15 py-3 text-xs tracking-[0.3em] uppercase
                     text-white/40 hover:text-white hover:border-[#b8955a] transition">
                   {isAR ? "← السابق" : "← Prev"}
                 </button>
-                <button onClick={() => { onNav((index + 1) % total); setShowInfo(false); }}
+                <button onClick={() => onNav((index + 1) % total)}
                   className="flex-1 border border-white/15 py-3 text-xs tracking-[0.3em] uppercase
                     text-white/40 hover:text-white hover:border-[#b8955a] transition">
                   {isAR ? "التالي →" : "Next →"}
