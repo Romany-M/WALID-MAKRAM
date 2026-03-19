@@ -21,12 +21,12 @@ const socials = [
 
 /* ══ PRELOADER ══ */
 function Preloader({ onDone }: { onDone: () => void }) {
-  useEffect(() => { const id = setTimeout(onDone, 1800); return () => clearTimeout(id); }, [onDone]);
+  useEffect(() => { const id = setTimeout(onDone, 3000); return () => clearTimeout(id); }, [onDone]);
   return (
     <motion.div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center px-6"
       exit={{ opacity: 0 }} transition={{ duration: 1.2, ease: "easeInOut" }}>
       <motion.div className="absolute bottom-0 left-0 h-[1px] bg-[#b8955a]"
-        initial={{ width:"0%" }} animate={{ width:"100%" }} transition={{ duration:1.4, ease:"easeInOut" }} />
+        initial={{ width:"0%" }} animate={{ width:"100%" }} transition={{ duration:2.6, ease:"easeInOut" }} />
       <motion.p className="text-[9px] tracking-[0.55em] text-neutral-400 uppercase mb-6"
         initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.3, duration:1 }}>
         — ARTIST —
@@ -37,7 +37,7 @@ function Preloader({ onDone }: { onDone: () => void }) {
         WALID MAKRAM
       </motion.h1>
       <motion.h1 className="font-light tracking-[0.5em] uppercase text-center italic"
-        style={{ fontSize:"clamp(1.6rem,5vw,4rem)", color:"#b8955a" }}
+        style={{ fontSize:"clamp(0.85rem,2.2vw,1.6rem)", color:"#b8955a" }}
         initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.8, duration:1.2 }}>
         ART GALLERY
       </motion.h1>
@@ -55,15 +55,16 @@ function ArtCard({ src, title, titleAR, delay=0, onClick }: ArtItem & { delay?:n
       whileInView={{ opacity:1, y:0 }}
       viewport={{ once:true, margin:"-80px" }}
       transition={{ duration:1, delay, ease:"easeOut" }}
-      className="cursor-pointer bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden group"
+      className="cursor-pointer bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden"
       onClick={onClick}
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
         <WatermarkedImage
           src={src}
           alt={isAR ? titleAR : title}
-          className="absolute inset-0 w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+          className="absolute inset-0 w-full h-full"
           objectPosition="top"
+          hoverScale={1.07}
         />
       </div>
       <div className="px-3 py-2 border-t border-neutral-100 dark:border-neutral-800" dir={isAR ? "rtl" : "ltr"}>
@@ -274,7 +275,9 @@ export default function Home() {
           <motion.div className="absolute inset-0"
             initial={{ opacity:0, scale:1.05 }} animate={{ opacity:loading?0:1, scale:loading?1.05:1 }}
             transition={{ duration:2, delay:0.2, ease:"easeOut" }}>
-            <img src={cfg.heroSrc} alt="Hero" className="w-full h-full object-cover"/>
+            {cfg.heroSrc && (
+              <img src={cfg.heroSrc} alt="Hero" className="w-full h-full object-cover"/>
+            )}
             <div className="absolute inset-0 bg-black/45"/>
           </motion.div>
           <motion.div className="relative z-10" initial={{ opacity:0 }} animate={{ opacity:loading?0:1 }} transition={{ duration:1.4, delay:0.5 }}>
@@ -329,7 +332,13 @@ export default function Home() {
                   </div>
                   <div className="overflow-hidden">
                     <div className="relative w-full h-[50vw] sm:h-[300px] md:h-[460px]">
-                      <WatermarkedImage src={m.src} alt={isAR?m.titleAR:m.title} className="absolute inset-0 w-full h-full group-hover:scale-105 transition-all duration-700 ease-out" objectPosition="top"/>
+                      <WatermarkedImage
+                        src={m.src}
+                        alt={isAR?m.titleAR:m.title}
+                        className="absolute inset-0 w-full h-full"
+                        objectPosition="top"
+                        hoverScale={1.07}
+                      />
                     </div>
                     <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-8 opacity-0 group-hover:opacity-100 transition-all duration-500" dir={isAR?"rtl":"ltr"}>
                       <p className="text-white text-[10px] md:text-[11px] tracking-[0.35em] uppercase font-medium drop-shadow mb-1">{isAR?m.titleAR:m.title}</p>
@@ -364,14 +373,15 @@ export default function Home() {
               <motion.div key={i}
                 initial={{ opacity:0, y:50 }} whileInView={{ opacity:1, y:0 }}
                 viewport={{ once:true, margin:"-80px" }} transition={{ duration:1, delay:i*0.07, ease:"easeOut" }}
-                className="cursor-pointer bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden group"
+                className="cursor-pointer bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden"
                 onClick={() => setVariousLb(i)}>
                 <div className="relative aspect-[4/5] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
                   <WatermarkedImage
                     src={item.src}
                     alt={isAR ? item.titleAR : item.title}
-                    className="absolute inset-0 w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="absolute inset-0 w-full h-full"
                     objectPosition="top"
+                    hoverScale={1.07}
                   />
                 </div>
                 <div className="px-3 py-2 border-t border-neutral-100 dark:border-neutral-800" dir={isAR ? "rtl" : "ltr"}>

@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 
+
 // ✅ تأكد إن الـ import صح ومفيش supabase client تاني في الملف
 
 export interface ArtItem {
@@ -76,12 +77,11 @@ export const defaultMurals: MuralItem[] = [
 ];
 
 export const defaultConfig: GalleryConfig = {
-  heroSrc: "/hero.png",
+  heroSrc: "",   // ← كان "/hero.png" — فاضي عشان ما يطلعش 404 قبل تحميل Supabase
   galleryData: defaultGalleryData,
   variousWorks: defaultVariousWorks,
   murals: defaultMurals,
 };
-
 /* ══════════════════════════════════
    Supabase load / save
 ══════════════════════════════════ */

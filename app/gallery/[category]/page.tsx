@@ -95,19 +95,12 @@ export default function GalleryDetailPage() {
   return (
     <div className={`min-h-screen ${isDark ? "bg-black text-white" : "bg-neutral-50 text-neutral-900"}`}>
 
-      {/* ══ LIGHTBOX ══ */}
       <AnimatePresence>
         {lb !== null && (
-          <FullscreenLightbox
-            items={items}
-            index={lb}
-            onClose={() => setLb(null)}
-            onNav={setLb}
-          />
+          <FullscreenLightbox items={items} index={lb} onClose={() => setLb(null)} onNav={setLb} />
         )}
       </AnimatePresence>
 
-      {/* ══ GRID ══ */}
       <div className="pt-32 pb-24 px-10 md:px-28">
         <div className="flex items-center justify-between mb-16">
           <button onClick={handleBack}
@@ -127,17 +120,18 @@ export default function GalleryDetailPage() {
             <motion.div key={`${page}-${i}`}
               initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: i * 0.06 }}
-              className="group cursor-pointer"
+              className="cursor-pointer"
               onClick={() => setLb(page * PAGE_SIZE + i)}>
               <div className="overflow-hidden bg-neutral-100 dark:bg-neutral-900 relative aspect-[4/5]">
                 <WatermarkedImage
                   src={item.src}
                   alt={getField(item, item.title, "titleAR", isAR)}
-                  className="absolute inset-0 w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full"
                   objectPosition="top"
+                  hoverScale={1.07}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#b8955a]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#b8955a]/30 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition pointer-events-none">
                   <div className="w-11 h-11 rounded-full border border-white/60 flex items-center justify-center backdrop-blur-sm bg-black/20">
                     <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-white fill-none" strokeWidth="1.6">
                       <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
