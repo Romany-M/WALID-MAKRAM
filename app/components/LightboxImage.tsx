@@ -3,7 +3,7 @@
 export default function LightboxImage({
   src,
   alt = "",
-  watermark = "Dana Dahdal ©",
+  watermark = "Walid Makram ©",
 }: {
   src: string;
   alt?: string;

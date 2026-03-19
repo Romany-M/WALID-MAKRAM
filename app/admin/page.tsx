@@ -8,17 +8,10 @@ import {
 } from "../lib/galleryData";
 import TranslateButton from "../components/TranslateButton";
 
-type Section = "hero" | "Icons" | "Gilding & Engraving" | "Mosaic" | "murals" | "Exhibitions";
+type Section = "hero"|"ancient"|"coptic"|"oil"|"various"|"murals";
 
 const emptyArt:   ArtItem   = { src:"", title:"", titleAR:"", medium:"", mediumAR:"", dims:"", year:"", location:"", locationAR:"" };
 const emptyMural: MuralItem = { src:"", title:"", titleAR:"", location:"", locationAR:"", medium:"", mediumAR:"", size:"", year:"" };
-
-// ✅ الـ mapping من Section key → مفتاح galleryData
-const SECTION_TO_GALLERY_KEY: Partial<Record<Section, keyof GalleryConfig["galleryData"]>> = {
-  "Icons":               "icons",
-  "Gilding & Engraving": "gilding",
-  "Mosaic":              "mosaic",
-};
 
 const ART_FIELDS = [
   { key:"src",        label:"Image URL",      labelAR:"رابط الصورة",     ph:"/icons/ancient/1.jpg" },
@@ -31,17 +24,16 @@ const ART_FIELDS = [
   { key:"location",   label:"Location (EN)",  labelAR:"الموقع إنجليزي",  ph:"Cairo, Egypt"         },
   { key:"locationAR", label:"Location (AR)",  labelAR:"الموقع عربي",     ph:"القاهرة، مصر"         },
 ];
-
 const MURAL_FIELDS = [
-  { key:"src",        label:"Image URL",      labelAR:"رابط الصورة",     ph:"/icons/oil/1.jpg"                },
-  { key:"title",      label:"Title (EN)",     labelAR:"العنوان إنجليزي", ph:"The Pantocrator Dome"            },
-  { key:"titleAR",    label:"Title (AR)",     labelAR:"العنوان عربي",    ph:"قبة المسيح الضابط الكل"          },
-  { key:"location",   label:"Location (EN)",  labelAR:"الموقع إنجليزي",  ph:"St. Mary's Cathedral, Jordan"    },
-  { key:"locationAR", label:"Location (AR)",  labelAR:"الموقع عربي",     ph:"كاتدرائية السيدة العذراء، الأردن" },
-  { key:"medium",     label:"Medium (EN)",    labelAR:"الأسلوب إنجليزي", ph:"Fresco Technique"                },
-  { key:"mediumAR",   label:"Medium (AR)",    labelAR:"الأسلوب عربي",    ph:"تقنية الفريسكو"                  },
-  { key:"size",       label:"Size",           labelAR:"المساحة",          ph:"120 sqm"                         },
-  { key:"year",       label:"Year",           labelAR:"السنة",            ph:"2021–2022"                       },
+  { key:"src",        label:"Image URL",      labelAR:"رابط الصورة",     ph:"/icons/oil/1.jpg"               },
+  { key:"title",      label:"Title (EN)",     labelAR:"العنوان إنجليزي", ph:"The Pantocrator Dome"           },
+  { key:"titleAR",    label:"Title (AR)",     labelAR:"العنوان عربي",    ph:"قبة المسيح الضابط الكل"         },
+  { key:"location",   label:"Location (EN)",  labelAR:"الموقع إنجليزي",  ph:"St. Mary's Cathedral, Jordan"   },
+  { key:"locationAR", label:"Location (AR)",  labelAR:"الموقع عربي",     ph:"كاتدرائية السيدة العذراء، الأردن"},
+  { key:"medium",     label:"Medium (EN)",    labelAR:"الأسلوب إنجليزي", ph:"Fresco Technique"               },
+  { key:"mediumAR",   label:"Medium (AR)",    labelAR:"الأسلوب عربي",    ph:"تقنية الفريسكو"                 },
+  { key:"size",       label:"Size",           labelAR:"المساحة",          ph:"120 sqm"                        },
+  { key:"year",       label:"Year",           labelAR:"السنة",            ph:"2021–2022"                      },
 ];
 
 // الحقول العربية وما يقابلها إنجليزي
@@ -52,15 +44,15 @@ const AR_TO_EN: Record<string, string> = {
 };
 
 const NAV: { key: Section; en: string; ar: string; icon: string }[] = [
-  { key:"hero",                en:"Hero Image",          ar:"صورة الغلاف",       icon:"🖼️" },
-  { key:"Icons",               en:"Icons",               ar:"أيقونات",           icon:"🏛️" },
-  { key:"Gilding & Engraving", en:"Gilding & Engraving", ar:"تذهيب ونقش",       icon:"✝️" },
-  { key:"Mosaic",              en:"Mosaic",               ar:"فسيفساء",           icon:"🎨" },
-  { key:"murals",              en:"Murals & Domes",       ar:"الجداريات والقباب", icon:"⛪" },
-  { key:"Exhibitions",         en:"Exhibitions",          ar:"معارض",             icon:"🖌️" },
+  { key:"hero",    en:"Hero Image",     ar:"صورة الغلاف",       icon:"🖼️" },
+  { key:"ancient", en:"Ancient Art",    ar:"الفن القديم",        icon:"🏛️" },
+  { key:"coptic",  en:"Coptic Art",     ar:"الفن القبطي",        icon:"✝️" },
+  { key:"oil",     en:"Oil Paintings",  ar:"اللوحات الزيتية",   icon:"🎨" },
+  { key:"various", en:"Various Works",  ar:"أعمال متنوعة",       icon:"🖌️" },
+  { key:"murals",  en:"Murals & Domes", ar:"الجداريات والقباب", icon:"⛪" },
 ];
 
-const PASSWORD = "danadahdal";
+const PASSWORD = "walidmakram";
 
 /* ══ InputField ══ */
 function InputField({
@@ -114,9 +106,11 @@ function InputField({
   );
 }
 
-/* ══ FormFields ══ */
+/* ══ FormFields — حقول الفورم مع زراير الترجمة ══ */
 function FormFields({
-  fields, item, onChange,
+  fields,
+  item,
+  onChange,
 }: {
   fields: typeof ART_FIELDS;
   item: ArtItem | MuralItem;
@@ -128,13 +122,15 @@ function FormFields({
   return (
     <div className="grid grid-cols-2 gap-2">
       {fields.map(f => {
-        const enKey = AR_TO_EN[f.key];
+        const enKey = AR_TO_EN[f.key]; // لو الحقل عربي، enKey = المقابل الإنجليزي
         return (
           <div key={f.key} className={`flex flex-col gap-1 ${f.key === "src" ? "col-span-2" : ""}`}>
+            {/* label + زرار الترجمة جنب بعض */}
             <div className="flex items-center justify-between gap-2">
               <label className="text-[10px] tracking-widest text-neutral-500 uppercase">
                 {f.label} <span className="text-neutral-700 normal-case">/ {f.labelAR}</span>
               </label>
+              {/* زرار الترجمة فقط على الحقول العربية */}
               {enKey && (
                 <TranslateButton
                   arabicText={val(f.key)}
@@ -143,6 +139,7 @@ function FormFields({
               )}
             </div>
             {f.key === "src" ? (
+              /* حقل الصورة مع رفع */
               <InputField
                 label="" labelAR="" ph={f.ph}
                 value={val(f.key)}
@@ -236,28 +233,21 @@ export default function AdminDashboard() {
     } finally { setHeroUploading(false); e.target.value = ""; }
   };
 
-  const getItems = (): (ArtItem | MuralItem)[] => {
+  const getItems = (): (ArtItem|MuralItem)[] => {
     if (!cfg?.galleryData) return [];
-    if (active === "murals")      return cfg.murals      || [];
-    if (active === "Exhibitions") return cfg.exhibitions || [];
-    const key = SECTION_TO_GALLERY_KEY[active];
-    if (key) return cfg.galleryData[key] || [];
+    if (active === "ancient") return cfg.galleryData.ancient || [];
+    if (active === "coptic")  return cfg.galleryData.coptic  || [];
+    if (active === "oil")     return cfg.galleryData.oil     || [];
+    if (active === "various") return cfg.variousWorks        || [];
+    if (active === "murals")  return cfg.murals              || [];
     return [];
   };
 
-  const setItems = (items: (ArtItem | MuralItem)[]) => {
-    if (active === "murals") {
-      setCfg({ ...cfg, murals: items as MuralItem[] });
-      return;
-    }
-    if (active === "Exhibitions") {
-      setCfg({ ...cfg, exhibitions: items as ArtItem[] });
-      return;
-    }
-    const key = SECTION_TO_GALLERY_KEY[active];
-    if (key) {
-      setCfg({ ...cfg, galleryData: { ...cfg.galleryData, [key]: items as ArtItem[] } });
-    }
+  const setItems = (items: (ArtItem|MuralItem)[]) => {
+    if (active === "murals")  { setCfg({ ...cfg, murals: items as MuralItem[] }); return; }
+    if (active === "various") { setCfg({ ...cfg, variousWorks: items as ArtItem[] }); return; }
+    if (["ancient","coptic","oil"].includes(active))
+      setCfg({ ...cfg, galleryData: { ...cfg.galleryData, [active]: items as ArtItem[] } });
   };
 
   const del       = (i: number) => { if (window.confirm("Delete this item?")) { const it = [...getItems()]; it.splice(i,1); setItems(it); } };
@@ -265,8 +255,8 @@ export default function AdminDashboard() {
   const saveEdit  = () => { if (editIdx===null||!editItem) return; const it=[...getItems()]; it[editIdx]=editItem; setItems(it); setEditIdx(null); setEditItem(null); };
   const addItem   = () => { setItems([...getItems(), newItem]); setNewItem(active==="murals"?emptyMural:emptyArt); setAddMode(false); };
 
-  const fields    = active === "murals" ? MURAL_FIELDS : ART_FIELDS;
-  const items     = getItems();
+  const fields = active === "murals" ? MURAL_FIELDS : ART_FIELDS;
+  const items  = getItems();
   const activeNav = NAV.find(s => s.key === active);
 
   /* ── PASSWORD SCREEN ── */
@@ -277,7 +267,7 @@ export default function AdminDashboard() {
           <div className="text-center mb-8">
             <div className="text-[#b8955a] text-4xl mb-3">🔐</div>
             <p className="text-white text-2xl tracking-widest font-light">ADMIN PANEL</p>
-            <p className="text-neutral-500 text-sm mt-1">Dana Dahdal Gallery</p>
+            <p className="text-neutral-500 text-sm mt-1">Walid Makram Gallery</p>
           </div>
           <input type="password" value={passInput}
             onChange={e => { setPassInput(e.target.value); setPassError(false); }}
@@ -300,7 +290,7 @@ export default function AdminDashboard() {
     <>
       <div className="px-6 py-6 border-b border-white/10">
         <p className="text-[8px] tracking-[0.6em] uppercase text-[#b8955a] mb-1">Admin Panel</p>
-        <p className="text-white font-light tracking-widest uppercase text-sm md:text-base">Dana Dahdal</p>
+        <p className="text-white font-light tracking-widest uppercase text-sm md:text-base">Walid Makram</p>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {NAV.map(s => (
@@ -444,6 +434,7 @@ export default function AdminDashboard() {
                           <p className="text-[#b8955a] text-[10px] tracking-widest uppercase">
                             ✏️ Editing — اكتب بالعربي واضغط ترجم
                           </p>
+                          {/* ✅ FormFields مع زراير الترجمة */}
                           <FormFields
                             fields={fields}
                             item={editItem!}
@@ -500,6 +491,7 @@ export default function AdminDashboard() {
                   <p className="text-[#b8955a] text-[10px] tracking-widest uppercase mb-4">
                     Add New Item — اكتب بالعربي واضغط ترجم للحصول على الإنجليزي تلقائياً
                   </p>
+                  {/* ✅ FormFields مع زراير الترجمة */}
                   <FormFields
                     fields={fields}
                     item={newItem}

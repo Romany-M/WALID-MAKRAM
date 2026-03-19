@@ -23,41 +23,41 @@ export const t: Record<string, Record<Lang, string>> = {
   // Navbar
   gallery:      { EN: "Gallery",      AR: "المعرض"       },
   murals_domes: { EN: "Murals Domes", AR: "الجداريات"    },
-  Exhibitions:  { EN: "Exhibitions",  AR: "معارض" },
+  various_art:  { EN: "Various Art",  AR: "أعمال متنوعة" },
   about:        { EN: "About",        AR: "عن الفنان"    },
   contact:      { EN: "Contact",      AR: "تواصل"        },
 
   // Hero
-  hero_name:    { EN: "DANA DAHDAL", AR: "دانا دحدل"    },
+  hero_name:    { EN: "WALID MAKRAM", AR: "وليد مكرم"    },
   hero_sub:     { EN: "ART GALLERY",  AR: "معرض فني"     },
 
   // Section labels
   selected_works:   { EN: "— Selected Works —",   AR: "— أعمال مختارة —"   },
   gallery_title:    { EN: "Gallery",               AR: "المعرض"              },
-  Exhibitions_title:{ EN: "Exhibitions",  AR: "معارض"  },
+  various_title:    { EN: "Various Works of Art",  AR: "أعمال فنية متنوعة"  },
   commission:       { EN: "— Commission a Work —", AR: "— طلب عمل فني —"    },
   contact_title:    { EN: "Contact",               AR: "تواصل معنا"          },
 
   // Gallery tabs
-  Icons_art:   { EN: "Icons",   AR: "أيقونات"   },
-  Gilding_Engraving: { EN: "Gilding & Engraving", AR: "تذهيب ونقش" },
-  Mosaic_art: { EN: "Mosaic", AR: "فسيفساء"  },
+  ancient_art:   { EN: "Ancient Art",   AR: "الفن القديم"   },
+  coptic_art:    { EN: "Coptic Art",    AR: "الفن القبطي"   },
+  oil_paintings: { EN: "Oil Paintings", AR: "أعمال زيتية"  },
 
   // Buttons
-  explore_icons:   { EN: "Explore Icons",           AR: "استعرض الأيقونات" },
-  explore_gilding: { EN: "Explore Gilding & Engraving", AR: "استعرض التذهيب والنقش" },
-  explore_mosaic:  { EN: "Explore Mosaic",          AR: "استعرض الفسيفساء" },
-  explore_murals:  { EN: "Explore Murals",          AR: "استعرض الجداريات" },
-  explore_exhibitions: { EN: "Explore Exhibitions", AR: "استعرض المعارض" },
+  explore_ancient:  { EN: "Explore All Ancient Art",        AR: "استعرض الفن القديم"         },
+  explore_coptic:   { EN: "Explore All Coptic Art",         AR: "استعرض الفن القبطي"         },
+  explore_oil:      { EN: "Explore All Oil Paintings",      AR: "استعرض اللوحات الزيتية"     },
+  explore_murals:   { EN: "Explore All Murals",             AR: "استعرض الجداريات"           },
+  explore_various:  { EN: "Explore All Various Works of Art", AR: "استعرض الأعمال المتنوعة"  },
 
   // About
   philosophy:   { EN: "Philosophy",        AR: "الفلسفة"                   },
   beyond:       { EN: "Beyond the",        AR: "ما وراء"                   },
   visible:      { EN: "Visible World",     AR: "العالم المرئي"              },
-  about_p1:     { EN: "Dana Dahdal is a master of iconography, a sacred art form where every line is a prayer and every color a theological statement.", AR: "دانا دحدل فنانة متخصصة في فن الأيقونات، حيث يمثل كل خط صلاة وكل لون تعبيرًا روحانيًا عميقًا." },
+  about_p1:     { EN: "Walid Makram is a master of iconography, a sacred art form where every line is a prayer and every color a theological statement.", AR: "وليد مكرم أستاذ في فن الأيقونات، هذا الفن المقدس الذي تكون فيه كل خطوط رسالةً وكل ألوان شهادةً لاهوتية." },
   about_quote:  { EN: "\"My work is not about creating art; it is about revealing the light that has existed for centuries within the sacred canons.\"", AR: "«عملي ليس عن صنع الفن، بل عن الكشف عن النور الذي وُجد لقرون داخل الكنون المقدسة»" },
-  about_p2:     { EN: "Specializing in traditional techniques and gold leaf, her works extend across various artistic styles including icons, gilding, mosaics, and exhibitions.", AR: "تتخصص في التقنيات التقليدية وأوراق الذهب، وتمتد أعمالها عبر مجالات فنية متعددة مثل الأيقونات والتذهيب والفسيفساء والمعارض." },
-  artist_caption: { EN: "The hand that creates art", AR: "اليد التي تصنع الفن" },
+  about_p2:     { EN: "Specializing in egg tempera and 24K gold leaf, his icons adorn cathedrals and private collections across the Middle East and Europe, preserving a tradition that spans over two millennia.", AR: "متخصص في تمبيرا البيض وأوراق الذهب عيار 24، وأيقوناته تزين الكاتدرائيات والمجموعات الخاصة في الشرق الأوسط وأوروبا." },
+  artist_caption: { EN: "The hand that traces the divine", AR: "اليد التي ترسم الإلهي" },
 
   // Contact form
   name:     { EN: "Name",          AR: "الاسم"         },
@@ -71,7 +71,7 @@ export const t: Record<string, Record<Lang, string>> = {
   send:     { EN: "Send Message",  AR: "إرسال"         },
 
   // Footer
-  footer:   { EN: "© 2026 DANA DAHDAL", AR: "© 2026 دانا دحدل" },
+  footer:   { EN: "© 2026 WALID MAKRAM", AR: "© 2026 وليد مكرم" },
 
   // Lightbox
   close:    { EN: "Close", AR: "إغلاق" },
