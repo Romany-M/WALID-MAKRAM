@@ -9,160 +9,7 @@ import {
   defaultConfig, loadConfig,
 } from "./lib/galleryData";
 import WatermarkedImage from "./components/WatermarkedImage";
-
-/* ══ ZOOMABLE LIGHTBOX IMAGE ══ */
-function ZoomableLightboxImage({
-  src, alt = "", watermark = "Walid Makram ©",
-}: { src: string; alt?: string; watermark?: string }) {
-  const [scale,  setScale]  = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const containerRef  = useRef<HTMLDivElement>(null);
-  const isDragging    = useRef(false);
-  const dragStart     = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
-  const lastTap       = useRef(0);
-  const currentScale  = useRef(1);
-  const currentOffset = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    setScale(1); setOffset({ x: 0, y: 0 });
-    currentScale.current = 1; currentOffset.current = { x: 0, y: 0 };
-  }, [src]);
-
-  const clamp = (s: number, ox: number, oy: number) => {
-    const el = containerRef.current;
-    if (!el) return { x: ox, y: oy };
-    const { width: w, height: h } = el.getBoundingClientRect();
-    const maxX = Math.max(0, (w * s - w) / 2);
-    const maxY = Math.max(0, (h * s - h) / 2);
-    return {
-      x: Math.min(maxX, Math.max(-maxX, ox)),
-      y: Math.min(maxY, Math.max(-maxY, oy)),
-    };
-  };
-
-  const applyOffset = (o: { x: number; y: number }) => {
-    currentOffset.current = o;
-    setOffset(o);
-  };
-
-  // ── Wheel zoom (desktop) ──
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const next = Math.min(5, Math.max(1, currentScale.current - e.deltaY * 0.003));
-    currentScale.current = next;
-    if (next === 1) { applyOffset({ x: 0, y: 0 }); }
-    else { applyOffset(clamp(next, currentOffset.current.x, currentOffset.current.y)); }
-    setScale(next);
-  };
-
-  // ── Mouse drag (desktop) ──
-  const onMouseDown = (e: React.MouseEvent) => {
-    if (currentScale.current <= 1) return;
-    e.preventDefault();
-    isDragging.current = true;
-    dragStart.current = { x: e.clientX, y: e.clientY, ox: currentOffset.current.x, oy: currentOffset.current.y };
-  };
-
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current) return;
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-    applyOffset(clamp(currentScale.current, dragStart.current.ox + dx, dragStart.current.oy + dy));
-  };
-
-  const onMouseUp = () => { isDragging.current = false; };
-
-  // ── Touch (mobile) ──
-  const onTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
-      // double tap → zoom
-      const now = Date.now();
-      if (now - lastTap.current < 300) {
-        const next = currentScale.current > 1.2 ? 1 : 2.5;
-        currentScale.current = next;
-        setScale(next);
-        if (next === 1) { applyOffset({ x: 0, y: 0 }); }
-        else { applyOffset(clamp(next, currentOffset.current.x, currentOffset.current.y)); }
-      }
-      lastTap.current = Date.now();
-      // drag start
-      dragStart.current = {
-        x: e.touches[0].clientX, y: e.touches[0].clientY,
-        ox: currentOffset.current.x, oy: currentOffset.current.y,
-      };
-    }
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault(); // منع scroll الصفحة
-    if (e.touches.length === 1 && currentScale.current > 1) {
-      const dx = e.touches[0].clientX - dragStart.current.x;
-      const dy = e.touches[0].clientY - dragStart.current.y;
-      applyOffset(clamp(currentScale.current, dragStart.current.ox + dx, dragStart.current.oy + dy));
-    }
-  };
-
-  const onTouchEnd = () => { isDragging.current = false; };
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative inline-block select-none overflow-hidden"
-      style={{ touchAction: "none" }}
-      onContextMenu={e => e.preventDefault()}
-      onDragStart={e => e.preventDefault()}
-      onWheel={onWheel}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      <div style={{
-        transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
-        transition: isDragging.current ? "none" : "transform 0.25s ease",
-        transformOrigin: "center center",
-        willChange: "transform",
-        cursor: scale > 1 ? (isDragging.current ? "grabbing" : "grab") : "default",
-      }}>
-        <img
-          src={src} alt={alt} draggable={false}
-          className="block max-h-[42vh] md:max-h-[68vh] max-w-[88vw] md:max-w-[75vw] w-auto h-auto object-contain"
-          style={{ pointerEvents: "none", userSelect: "none" }}
-        />
-      </div>
-
-      {/* watermark */}
-      <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <span key={i} className="absolute text-white/[0.055] font-light select-none"
-            style={{ fontSize: "clamp(9px,2vw,13px)", transform: "rotate(-25deg)", whiteSpace: "nowrap",
-              left: `${(i % 3) * 38 - 5}%`, top: `${Math.floor(i / 3) * 30 - 5}%`,
-              textShadow: "1px 1px 2px rgba(0,0,0,0.25)", letterSpacing: "0.03em" }}>
-            {watermark}
-          </span>
-        ))}
-      </div>
-
-      {/* hint */}
-      {scale === 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap">
-          <span className="text-white/30 text-[10px] tracking-widest hidden md:block">scroll to zoom · drag to pan</span>
-          <span className="text-white/30 text-[10px] tracking-widest md:hidden">double tap to zoom · drag to pan</span>
-        </div>
-      )}
-
-      {/* zoom % */}
-      {scale > 1 && (
-        <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm px-2 py-1 pointer-events-none">
-          <span className="text-white/60 text-[10px] tracking-widest">{Math.round(scale * 100)}%</span>
-        </div>
-      )}
-    </div>
-  );
-}
+import FullscreenLightbox from "./components/FullscreenLightbox";
 
 let _preloaderShown = false;
 
@@ -198,89 +45,6 @@ function Preloader({ onDone }: { onDone: () => void }) {
   );
 }
 
-/* ══ LIGHTBOX ══ */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ImageLightbox({ items, index, onClose, onNav }: { items: any[]; index: number; onClose: () => void; onNav:(i:number)=>void }) {
-  const { lang } = useLang();
-  const item = items[index]; const total = items.length;
-  const isAR = lang === "AR";
-  const getF = (en: string, arKey: string) => isAR && item[arKey] ? item[arKey] : en;
-  const [isDark, setIsDark] = useState(() => typeof document !== "undefined" && document.documentElement.classList.contains("dark"));
-  useEffect(() => {
-    const obs = new MutationObserver(() => setIsDark(document.documentElement.classList.contains("dark")));
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => obs.disconnect();
-  }, []);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft")  onNav((index - 1 + total) % total);
-      if (e.key === "ArrowRight") onNav((index + 1) % total);
-    };
-    window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
-  }, [index, total, onClose, onNav]);
-
-  return (
-    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}
-      className={`fixed inset-0 z-[300] flex flex-col ${isDark ? "bg-black text-white" : "bg-white text-neutral-900"}`}
-      onClick={onClose} dir={isAR ? "rtl" : "ltr"}>
-      <div className={`flex justify-between items-center px-4 md:px-8 py-4 md:py-5 flex-shrink-0 border-b ${isDark ? "border-white/10" : "border-neutral-200"}`}>
-        <span className={`text-xs tracking-[0.5em] font-light ${isDark ? "text-white/40" : "text-neutral-400"}`}>
-          {String(index+1).padStart(2,"0")} &mdash; {String(total).padStart(2,"0")}
-        </span>
-        <button onClick={onClose}
-          className={`flex items-center gap-2 md:gap-3 text-xs md:text-sm tracking-[0.4em] uppercase transition-colors duration-200 group ${isDark ? "text-white/60 hover:text-white" : "text-neutral-500 hover:text-neutral-900"}`}>
-          {t.close[lang]}
-          <span className={`w-8 h-8 md:w-9 md:h-9 rounded-full border flex items-center justify-center text-base md:text-lg text-[#b8955a] transition-all duration-300 group-hover:border-[#b8955a] ${isDark ? "border-white/20" : "border-neutral-300"}`}>✕</span>
-        </button>
-      </div>
-      <div className="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="h-[42vh] shrink-0 md:h-auto md:flex-1 flex items-center justify-center relative p-4 md:p-16 overflow-hidden">
-          <button className={`absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 md:w-12 h-16 md:h-20 flex items-center justify-center text-4xl md:text-5xl transition z-10 ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
-            onClick={() => onNav((index-1+total)%total)}>‹</button>
-          <motion.div key={index} initial={{ opacity:0, scale:0.97 }} animate={{ opacity:1, scale:1 }} transition={{ duration:0.5, ease:"easeOut" }} className="relative inline-flex">
-            <ZoomableLightboxImage src={item.src} alt={getF(item.title,"titleAR")} />
-            <div className="absolute -inset-4 border border-[#b8955a]/15 pointer-events-none hidden md:block" />
-          </motion.div>
-          <button className={`absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 md:w-12 h-16 md:h-20 flex items-center justify-center text-4xl md:text-5xl transition z-10 ${isDark ? "text-white/15 hover:text-[#b8955a]" : "text-neutral-300 hover:text-[#b8955a]"}`}
-            onClick={() => onNav((index+1)%total)}>›</button>
-        </div>
-        <motion.div key={`info-${index}`} initial={{ opacity:0, x: isAR ? -24 : 24 }} animate={{ opacity:1, x:0 }} transition={{ duration:0.5, delay:0.1 }}
-          className={`w-full md:w-[420px] lg:w-[500px] shrink-0 flex flex-col justify-start md:justify-center px-6 md:px-12 py-6 md:py-14 border-t md:border-t-0 md:border-l overflow-y-auto flex-1 md:flex-none ${isDark ? "border-white/10 bg-transparent" : "border-neutral-200 bg-white"}`}>
-          <p className="text-[#b8955a] text-[10px] tracking-[0.65em] uppercase mb-4 md:mb-6">— {item.year} —</p>
-          <h3 className={`font-extralight leading-relaxed mb-6 md:mb-10 ${isDark ? "text-white" : "text-neutral-900"} ${isAR ? "ar-section-title text-xl md:text-2xl" : "text-2xl md:text-3xl tracking-[0.15em]"}`}>
-            {getF(item.title,"titleAR")}
-          </h3>
-          <div className={`space-y-4 md:space-y-6 border-t pt-6 md:pt-8 ${isDark?"border-white/10":"border-neutral-200"}`}>
-            <div>
-              <p className={`text-[9px] tracking-[0.55em] uppercase mb-1 md:mb-2 ${isDark?"text-white/25":"text-neutral-400"}`}>{isAR?"الأسلوب":"Medium"}</p>
-              <p className={`font-light leading-relaxed ${isDark?"text-neutral-300":"text-neutral-600"} ${isAR?"ar-card-text text-sm md:text-base":"text-sm italic"}`}>{getF(item.medium,"mediumAR")}</p>
-            </div>
-            {item.dims&&<div>
-              <p className={`text-[9px] tracking-[0.55em] uppercase mb-1 md:mb-2 ${isDark?"text-white/25":"text-neutral-400"}`}>{isAR?"الأبعاد":"Dimensions"}</p>
-              <p className={`text-sm tracking-widest ${isDark?"text-neutral-400":"text-neutral-500"}`}>{item.dims}</p>
-            </div>}
-            {item.size&&<div>
-              <p className={`text-[9px] tracking-[0.55em] uppercase mb-1 md:mb-2 ${isDark?"text-white/25":"text-neutral-400"}`}>{isAR?"المساحة":"Scale"}</p>
-              <p className={`text-sm tracking-widest ${isDark?"text-neutral-400":"text-neutral-500"}`}>{item.size}</p>
-            </div>}
-            <div>
-              <p className={`text-[9px] tracking-[0.55em] uppercase mb-1 md:mb-2 ${isDark?"text-white/25":"text-neutral-400"}`}>{isAR?"الموقع":"Location"}</p>
-              <p className={`leading-relaxed ${isDark?"text-neutral-400":"text-neutral-500"} ${isAR?"ar-card-text text-sm md:text-base":"text-sm tracking-wider"}`}>{getF(item.location,"locationAR")}</p>
-            </div>
-          </div>
-          <div className="flex gap-3 mt-8 md:mt-12">
-            <button onClick={()=>onNav((index-1+total)%total)} className={`flex-1 border py-3 md:py-4 text-xs md:text-sm tracking-[0.3em] uppercase hover:border-[#b8955a] transition-all duration-300 ${isDark?"border-white/15 text-white/40 hover:text-white":"border-neutral-200 text-neutral-400 hover:text-neutral-900"}`}>{t.prev[lang]}</button>
-            <button onClick={()=>onNav((index+1)%total)} className={`flex-1 border py-3 md:py-4 text-xs md:text-sm tracking-[0.3em] uppercase hover:border-[#b8955a] transition-all duration-300 ${isDark?"border-white/15 text-white/40 hover:text-white":"border-neutral-200 text-neutral-400 hover:text-neutral-900"}`}>{t.next[lang]}</button>
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-}
-
 /* ══ ART CARD ══ */
 function ArtCard({ src, title, titleAR, delay=0, onClick }: ArtItem & { delay?:number; onClick?:()=>void }) {
   const { lang } = useLang();
@@ -291,14 +55,14 @@ function ArtCard({ src, title, titleAR, delay=0, onClick }: ArtItem & { delay?:n
       whileInView={{ opacity:1, y:0 }}
       viewport={{ once:true, margin:"-80px" }}
       transition={{ duration:1, delay, ease:"easeOut" }}
-      className="cursor-pointer bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+      className="cursor-pointer bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden group"
       onClick={onClick}
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
         <WatermarkedImage
           src={src}
           alt={isAR ? titleAR : title}
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
           objectPosition="top"
         />
       </div>
@@ -350,7 +114,9 @@ function GallerySection({ data }: { data: GalleryConfig["galleryData"] }) {
   return (
     <>
       <AnimatePresence>
-        {lb !== null && <ImageLightbox items={items} index={lb} onClose={()=>setLb(null)} onNav={setLb} />}
+        {lb !== null && (
+          <FullscreenLightbox items={items} index={lb} onClose={() => setLb(null)} onNav={setLb} />
+        )}
       </AnimatePresence>
       <section id="gallery" className="px-4 sm:px-8 md:px-28 py-12 md:py-24">
         <SectionHeader label={t.selected_works[lang]} title={t.gallery_title[lang]} />
@@ -490,8 +256,16 @@ export default function Home() {
   return (
     <>
       <AnimatePresence>{loading && <Preloader onDone={handlePreloaderDone} />}</AnimatePresence>
-      <AnimatePresence>{muralLb!==null&&<ImageLightbox items={cfg.murals} index={muralLb} onClose={()=>setMuralLb(null)} onNav={setMuralLb}/>}</AnimatePresence>
-      <AnimatePresence>{variousLb!==null&&<ImageLightbox items={cfg.variousWorks} index={variousLb} onClose={()=>setVariousLb(null)} onNav={setVariousLb}/>}</AnimatePresence>
+      <AnimatePresence>
+        {muralLb !== null && (
+          <FullscreenLightbox items={cfg.murals} index={muralLb} onClose={() => setMuralLb(null)} onNav={setMuralLb} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {variousLb !== null && (
+          <FullscreenLightbox items={cfg.variousWorks} index={variousLb} onClose={() => setVariousLb(null)} onNav={setVariousLb} />
+        )}
+      </AnimatePresence>
 
       <main className="bg-neutral-50 dark:bg-black text-neutral-900 dark:text-white overflow-x-hidden">
 
@@ -586,7 +360,27 @@ export default function Home() {
           <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#b8955a]/40 to-transparent mb-8 md:mb-12"/>
           <SectionHeader label="" title={t.various_title[lang]}/>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 items-start">
-            {cfg.variousWorks.slice(0, 8).map((item,i)=><ArtCard key={i} {...item} delay={i*0.07} onClick={()=>setVariousLb(i)}/>)}
+            {cfg.variousWorks.slice(0, 8).map((item,i)=>(
+              <motion.div key={i}
+                initial={{ opacity:0, y:50 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true, margin:"-80px" }} transition={{ duration:1, delay:i*0.07, ease:"easeOut" }}
+                className="cursor-pointer bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden group"
+                onClick={() => setVariousLb(i)}>
+                <div className="relative aspect-[4/5] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                  <WatermarkedImage
+                    src={item.src}
+                    alt={isAR ? item.titleAR : item.title}
+                    className="absolute inset-0 w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+                    objectPosition="top"
+                  />
+                </div>
+                <div className="px-3 py-2 border-t border-neutral-100 dark:border-neutral-800" dir={isAR ? "rtl" : "ltr"}>
+                  <p className={`truncate ${isAR ? "ar-card-text text-xs text-neutral-700 dark:text-neutral-300" : "text-[10px] tracking-[0.12em] uppercase text-neutral-700 dark:text-neutral-300"}`}>
+                    {isAR ? item.titleAR : item.title}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
           </div>
           <div className="text-center mt-8 md:mt-14">
             <Link href="/gallery/various" onClick={() => sessionStorage.setItem("scrollToSection", "various")}
