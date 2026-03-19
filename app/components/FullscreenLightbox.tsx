@@ -137,33 +137,58 @@ export default function FullscreenLightbox({ items, index, onClose, onNav }: Pro
   const onMouseUp = () => { isDragging.current = false; };
 
   const onTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
     if (e.touches.length === 2) {
       isPinching.current = true;
       const [a, b] = [e.touches[0], e.touches[1]];
       lastPinchDist.current = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
-    } else {
+      // سجّل نقطة البداية للـ drag أثناء الـ pinch كمان
+      dragStart.current = {
+        x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2,
+        ox: currentOffset.current.x, oy: currentOffset.current.y,
+      };
+    } else if (e.touches.length === 1) {
       isPinching.current = false;
       const now = Date.now();
-      if (now - lastTap.current < 300) applyScale(currentScale.current > 1.2 ? 1 : 2.5);
+      if (now - lastTap.current < 300) {
+        applyScale(currentScale.current > 1.2 ? 1 : 2.5);
+        lastTap.current = 0;
+        return;
+      }
       lastTap.current = now;
-      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: currentOffset.current.x, oy: currentOffset.current.y };
+      dragStart.current = {
+        x: e.touches[0].clientX, y: e.touches[0].clientY,
+        ox: currentOffset.current.x, oy: currentOffset.current.y,
+      };
     }
   };
   const onTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
-    if (e.touches.length === 2 && lastPinchDist.current) {
+    e.stopPropagation();
+    if (e.touches.length === 2 && lastPinchDist.current !== null) {
       const [a, b] = [e.touches[0], e.touches[1]];
       const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
-      applyScale(currentScale.current * (dist / lastPinchDist.current));
+      const ratio = dist / lastPinchDist.current;
       lastPinchDist.current = dist;
+      applyScale(currentScale.current * ratio);
     } else if (e.touches.length === 1 && !isPinching.current && currentScale.current > 1) {
-      const o = clamp(currentScale.current,
+      const o = clamp(
+        currentScale.current,
         dragStart.current.ox + e.touches[0].clientX - dragStart.current.x,
-        dragStart.current.oy + e.touches[0].clientY - dragStart.current.y);
-      currentOffset.current = o; setOffset(o);
+        dragStart.current.oy + e.touches[0].clientY - dragStart.current.y,
+      );
+      currentOffset.current = o;
+      setOffset(o);
     }
   };
-  const onTouchEnd = () => { isPinching.current = false; lastPinchDist.current = null; isDragging.current = false; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (e.touches.length < 2) {
+      isPinching.current = false;
+      lastPinchDist.current = null;
+    }
+    isDragging.current = false;
+  };
 
   const get = (en: string, arKey: string) => isAR && item[arKey] ? item[arKey] : en;
 
@@ -218,26 +243,31 @@ export default function FullscreenLightbox({ items, index, onClose, onNav }: Pro
           onContextMenu={e => e.preventDefault()}
           onDragStart={e => e.preventDefault()}
         >
+          {/* wrapper للـ fade-in animation فقط */}
           <motion.div
             key={index}
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            style={{
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            {/* wrapper للـ zoom + pan */}
+            <div style={{
               transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
-              transition: isDragging.current ? "none" : "transform 0.25s ease",
+              transition: isDragging.current ? "none" : "transform 0.2s ease",
               transformOrigin: "center center",
               cursor: scale > 1 ? (isDragging.current ? "grabbing" : "grab") : "default",
               willChange: "transform",
-            }}
-          >
-            <img
-              src={item.src}
-              alt={get(item.title, "titleAR")}
-              draggable={false}
-              className="block w-auto h-auto object-contain"
-              style={{ maxWidth: "100vw", maxHeight: "100dvh", pointerEvents: "none", userSelect: "none" }}
-            />
+              touchAction: "none",
+            }}>
+              <img
+                src={item.src}
+                alt={get(item.title, "titleAR")}
+                draggable={false}
+                className="block w-auto h-auto object-contain"
+                style={{ maxWidth: "100vw", maxHeight: "100dvh", pointerEvents: "none", userSelect: "none" }}
+              />
+            </div>
           </motion.div>
 
           {/* Watermark */}
