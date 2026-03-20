@@ -52,7 +52,7 @@ const NAV: { key: Section; en: string; ar: string; icon: string }[] = [
   { key:"murals",  en:"Murals & Domes", ar:"الجداريات والقباب", icon:"⛪" },
 ];
 
-const PASSWORD = "walidmakram";
+const PASSWORD = "walidmakram86";
 
 /* ══ InputField ══ */
 function InputField({
