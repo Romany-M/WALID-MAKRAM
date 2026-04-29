@@ -62,12 +62,15 @@ export const metadata: Metadata = {
     canonical: "/",
     languages: { "en-US": "/", "ar-EG": "/" },
   },
+  verification: {
+    google: "a663a827ed909103",
+  },
   openGraph: {
     type           : "website",
     locale         : "en_US",
     alternateLocale: "ar_EG",
     url            : "https://walidmakram.art",
-    siteName       : "Walid Makram Art Gallery",
+    siteName       : "Walid Makram",
     title          : "Walid Makram | Egyptian Artist — معرض وليد مكرم",
     description    : "Discover the art of Walid Makram — Ancient Egyptian, Coptic, Oil Paintings & Murals. اكتشف أعمال وليد مكرم الفنية.",
     images: [{
@@ -99,7 +102,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
-        {/* JSON-LD — بيساعد جوجل يفهم الموقع */}
+
+        {/* JSON-LD — WebSite — بيخلي جوجل يعرض اسم الموقع صح */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context"    : "https://schema.org",
+              "@type"       : "WebSite",
+              "name"        : "Walid Makram",
+              "alternateName": "معرض وليد مكرم",
+              "url"         : "https://walidmakram.art",
+            }),
+          }}
+        />
+
+        {/* JSON-LD — ArtGallery — بيساعد جوجل يفهم الموقع */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
